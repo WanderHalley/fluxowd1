@@ -1,0 +1,8 @@
+{
+  "name": "WD Máquinas - Gestão",
+  "description": "Sistema de gestão e fluxo de caixa para WD Máquinas.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
