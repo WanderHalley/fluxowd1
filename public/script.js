@@ -293,10 +293,17 @@ var mesesNomes=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','A
 function renderFluxoMes(mesIdx){
   var pg=document.getElementById('page-'+mesesKeys[mesIdx]);if(!pg)return;
   var mesKey=mesesKeys[mesIdx];var lancs=(appData.fluxoCaixa&&appData.fluxoCaixa[mesKey])?appData.fluxoCaixa[mesKey]:[];
-  var prevKey=mesIdx>0?mesesKeys[mesIdx-1]:null;var prevLancs=prevKey&&appData.fluxoCaixa?appData.fluxoCaixa[prevKey]||[]:[];
-  var prevEnt=prevLancs.filter(function(l){return l.tipo==='entrada';}).reduce(function(s,l){return s+(l.valor||0);},0);
-  var prevSai=prevLancs.filter(function(l){return l.tipo==='saida';}).reduce(function(s,l){return s+(l.valor||0);},0);
-  var saldoAnterior=prevEnt-prevSai;
+  
+  // Cálculo do Saldo Anterior Acumulado
+  var saldoAnterior = 0;
+  for(var i=0; i<mesIdx; i++){
+    var k = mesesKeys[i];
+    var mLancs = (appData.fluxoCaixa && appData.fluxoCaixa[k]) ? appData.fluxoCaixa[k] : [];
+    var mEnt = mLancs.filter(function(l){return l.tipo==='entrada';}).reduce(function(s,l){return s+(l.valor||0);},0);
+    var mSai = mLancs.filter(function(l){return l.tipo==='saida';}).reduce(function(s,l){return s+(l.valor||0);},0);
+    saldoAnterior += (mEnt - mSai);
+  }
+
   var entradas=lancs.filter(function(l){return l.tipo==='entrada';}).reduce(function(s,l){return s+(l.valor||0);},0);
   var saidas=lancs.filter(function(l){return l.tipo==='saida';}).reduce(function(s,l){return s+(l.valor||0);},0);
   var saldoFinal=saldoAnterior+entradas-saidas;
