@@ -1,13 +1,148 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>My Google AI Studio App</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WD Máquinas - Sistema de Fluxo de Caixa 2026</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<div class="app-container">
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <img id="sidebarLogo" src="" alt="Logo" style="display:none;max-width:220px;max-height:70px;object-fit:contain;margin:0 auto 6px auto;">
+            <h1 id="sidebarNome">WD MÁQUINAS</h1>
+            <p id="sidebarCnpj">CNPJ: 59.483.994/0001-01</p>
+        </div>
+        <nav class="sidebar-nav">
+            <div class="nav-section">
+                <div class="nav-section-title">Principal</div>
+                <div class="nav-item active" onclick="navigateTo('dashboard')"><span class="nav-icon">📊</span> Dashboard</div>
+            </div>
+            <div class="nav-section">
+                <div class="nav-section-title">Fluxo de Caixa</div>
+                <div class="nav-item" onclick="navigateTo('janeiro')"><span class="nav-icon">📅</span> Janeiro</div>
+                <div class="nav-item" onclick="navigateTo('fevereiro')"><span class="nav-icon">📅</span> Fevereiro</div>
+                <div class="nav-item" onclick="navigateTo('marco')"><span class="nav-icon">📅</span> Março</div>
+                <div class="nav-item" onclick="navigateTo('abril')"><span class="nav-icon">📅</span> Abril</div>
+                <div class="nav-item" onclick="navigateTo('maio')"><span class="nav-icon">📅</span> Maio</div>
+                <div class="nav-item" onclick="navigateTo('junho')"><span class="nav-icon">📅</span> Junho</div>
+                <div class="nav-item" onclick="navigateTo('julho')"><span class="nav-icon">📅</span> Julho</div>
+                <div class="nav-item" onclick="navigateTo('agosto')"><span class="nav-icon">📅</span> Agosto</div>
+                <div class="nav-item" onclick="navigateTo('setembro')"><span class="nav-icon">📅</span> Setembro</div>
+                <div class="nav-item" onclick="navigateTo('outubro')"><span class="nav-icon">📅</span> Outubro</div>
+                <div class="nav-item" onclick="navigateTo('novembro')"><span class="nav-icon">📅</span> Novembro</div>
+                <div class="nav-item" onclick="navigateTo('dezembro')"><span class="nav-icon">📅</span> Dezembro</div>
+            </div>
+            <div class="nav-section">
+                <div class="nav-section-title">Gestão</div>
+                <!-- ★ CORRIGIDO: onclick agora corresponde ao texto do botão ★ -->
+                <div class="nav-item" onclick="navigateTo('compras')"><span class="nav-icon">🛒</span> Compras</div>
+                <div class="nav-item" onclick="navigateTo('vendas')"><span class="nav-icon">💰</span> Vendas</div>
+                <div class="nav-item" onclick="navigateTo('estoque')"><span class="nav-icon">📦</span> Estoque</div>
+            </div>
+            <div class="nav-section">
+                <div class="nav-section-title">Cadastros</div>
+                <div class="nav-item" onclick="navigateTo('produtos')"><span class="nav-icon">🏷️</span> Produtos</div>
+                <div class="nav-item" onclick="navigateTo('clientes')"><span class="nav-icon">👥</span> Clientes</div>
+                <div class="nav-item" onclick="navigateTo('fornecedores')"><span class="nav-icon">🏭</span> Fornecedores</div>
+                <div class="nav-item" onclick="navigateTo('pfornecedores')"><span class="nav-icon">📋</span> P. Fornecedores</div>
+            </div>
+            <div class="nav-section">
+                <div class="nav-section-title">Financeiro</div>
+                <div class="nav-item" onclick="navigateTo('boletos')"><span class="nav-icon">🔖</span> Boletos</div>
+                <div class="nav-item" onclick="navigateTo('cheques')"><span class="nav-icon">📝</span> Cheques</div>
+                <div class="nav-item" onclick="navigateTo('prestacoes')"><span class="nav-icon">💳</span> Prestações</div>
+                <div class="nav-item" onclick="navigateTo('projetos')"><span class="nav-icon">📐</span> Projetos</div>
+                <div class="nav-item" onclick="navigateTo('pagclientes')"><span class="nav-icon">🤝</span> Pag. Clientes</div>
+                <div class="nav-item" onclick="navigateTo('garantias')"><span class="nav-icon">🛡️</span> Garantias</div>
+            </div>
+            <div class="nav-section">
+                <div class="nav-section-title">Relatórios</div>
+                <div class="nav-item" onclick="navigateTo('relatorios')"><span class="nav-icon">📈</span> Relatórios</div>
+                <div class="nav-item" onclick="navigateTo('notasentrada')"><span class="nav-icon">📥</span> Notas Entrada</div>
+                <div class="nav-item" onclick="navigateTo('notassaida')"><span class="nav-icon">📤</span> Notas Saída</div>
+                <div class="nav-item" onclick="navigateTo('receitasmei')"><span class="nav-icon">📄</span> Receitas MEI</div>
+            </div>
+            <div class="nav-section">
+                <div class="nav-section-title">Sistema</div>
+                <div class="nav-item" onclick="navigateTo('configuracoes')"><span class="nav-icon">⚙️</span> Configurações</div>
+                <div class="nav-item" onclick="navigateTo('backup')"><span class="nav-icon">💾</span> Backup</div>
+            </div>
+        </nav>
+        <div class="sidebar-collapse-btn" id="sidebarCollapseBtn" onclick="event.stopPropagation(); collapseSidebar()">
+            <span class="collapse-arrow" id="collapseArrow">«</span>
+        </div>
+    </aside>
+    <main class="main-content">
+        <div class="topbar">
+            <div class="topbar-left">
+                <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+                <button class="expand-btn" id="expandBtn" onclick="collapseSidebar()" style="display:none;" title="Expandir menu">»</button>
+                <span class="topbar-title" id="pageTitle">Dashboard</span>
+            </div>
+            <div class="topbar-right">
+                <span class="topbar-date" id="currentDate"></span>
+            </div>
+        </div>
+        <div class="content-area">
+            <div class="page-content" id="page-dashboard" style="display:block;"><div id="dashboardCards"></div></div>
+            <div class="page-content" id="page-janeiro"></div>
+            <div class="page-content" id="page-fevereiro"></div>
+            <div class="page-content" id="page-marco"></div>
+            <div class="page-content" id="page-abril"></div>
+            <div class="page-content" id="page-maio"></div>
+            <div class="page-content" id="page-junho"></div>
+            <div class="page-content" id="page-julho"></div>
+            <div class="page-content" id="page-agosto"></div>
+            <div class="page-content" id="page-setembro"></div>
+            <div class="page-content" id="page-outubro"></div>
+            <div class="page-content" id="page-novembro"></div>
+            <div class="page-content" id="page-dezembro"></div>
+            <div class="page-content" id="page-compras"></div>
+            <div class="page-content" id="page-vendas"></div>
+            <div class="page-content" id="page-estoque"></div>
+            <div class="page-content" id="page-produtos"></div>
+            <div class="page-content" id="page-clientes"></div>
+            <div class="page-content" id="page-fornecedores"></div>
+            <div class="page-content" id="page-pfornecedores"></div>
+            <div class="page-content" id="page-boletos"></div>
+            <div class="page-content" id="page-cheques"></div>
+            <div class="page-content" id="page-prestacoes"></div>
+            <div class="page-content" id="page-projetos"></div>
+            <div class="page-content" id="page-pagclientes"></div>
+            <div class="page-content" id="page-garantias"></div>
+            <div class="page-content" id="page-relatorios"></div>
+            <div class="page-content" id="page-notasentrada"></div>
+            <div class="page-content" id="page-notassaida"></div>
+            <div class="page-content" id="page-receitasmei"></div>
+            <div class="page-content" id="page-configuracoes"></div>
+            <div class="page-content" id="page-backup"></div>
+        </div>
+    </main>
+</div>
+<div class="modal-overlay" id="cadastroModal">
+    <div class="modal" onmousedown="event.stopPropagation()">
+        <div class="modal-header">
+            <h3 id="cadastroModalTitle">Cadastro</h3>
+            <button class="modal-close" onclick="closeCadastroModal()">✕</button>
+        </div>
+        <div class="modal-body" id="cadastroModalBody"></div>
+        <div class="modal-footer" id="cadastroModalFooter"></div>
+    </div>
+</div>
+<div class="modal-overlay" id="viewModal">
+    <div class="modal" onmousedown="event.stopPropagation()">
+        <div class="modal-header">
+            <h3 id="viewModalTitle">Detalhes</h3>
+            <button class="modal-close" onclick="closeViewModal()">✕</button>
+        </div>
+        <div class="modal-body" id="viewModalBody"></div>
+    </div>
+</div>
+<div id="toast" class="toast"></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/script.js"></script>
+</body>
 </html>
-
