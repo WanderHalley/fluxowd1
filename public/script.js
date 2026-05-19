@@ -16,6 +16,40 @@ let comprasFilterPgto = '';
 let vendasSearchQuery = '';
 let vendasFilterSit = '';
 let fluxoFilterText = '';
+
+let comprasSortCol = 'data';
+let comprasSortDir = 'desc';
+let vendasSortCol = 'data';
+let vendasSortDir = 'desc';
+
+function toggleSort(page, col) {
+  if (page === 'compras') {
+    if (comprasSortCol === col) {
+      comprasSortDir = (comprasSortDir === 'asc' ? 'desc' : 'asc');
+    } else {
+      comprasSortCol = col;
+      comprasSortDir = 'asc';
+    }
+    applyComprasFilters();
+    renderComprasPageHeader();
+  } else if (page === 'vendas') {
+    if (vendasSortCol === col) {
+      vendasSortDir = (vendasSortDir === 'asc' ? 'desc' : 'asc');
+    } else {
+      vendasSortCol = col;
+      vendasSortDir = 'asc';
+    }
+    applyVendasFilters();
+    renderVendasPageHeader();
+  }
+}
+
+function getSortIcon(page, col) {
+  var currentCol = (page === 'compras' ? comprasSortCol : vendasSortCol);
+  var currentDir = (page === 'compras' ? comprasSortDir : vendasSortDir);
+  if (currentCol !== col) return '↕';
+  return currentDir === 'asc' ? '▲' : '▼';
+}
 let fluxoFilterTipo = '';
 let produtosSearchQuery = '';
 let produtosFilterCat = '';
@@ -630,8 +664,18 @@ function renderComprasPage(){
   var pg=document.getElementById('page-compras');if(!pg)return;
   var sitOpts=(appData.situacaoCompra||[]).map(function(s){return'<option value="'+s+'">'+s+'</option>';}).join('');
   var pgtoOpts=(appData.formasPagamento||[]).map(function(f){return'<option value="'+f+'">'+f+'</option>';}).join('');
-  pg.innerHTML='<div class="page-header"><h2>🛒 Compras</h2><div style="display:flex;gap:8px"><button class="btn btn-primary" onclick="openCompraModal()">+ Nova Compra</button></div></div><div class="dashboard-grid" id="comprasResultPanel"></div><div class="filter-bar"><input type="text" class="form-control" style="max-width:250px" placeholder="Buscar compra..." oninput="onComprasSearch(this.value)"><select class="form-control" style="max-width:160px" onchange="onComprasFilterSit(this.value)"><option value="">Situação (todas)</option>'+sitOpts+'</select><select class="form-control" style="max-width:160px" onchange="onComprasFilterPgto(this.value)"><option value="">Pgto (todos)</option>'+pgtoOpts+'</select></div><div class="table-responsive"><table class="table"><thead><tr><th>Data</th><th>Produto</th><th>Fornecedor</th><th>Qtd</th><th>V.Unit</th><th>Total</th><th>F.Pgto</th><th>Venc.</th><th>Situação</th><th>Ações</th></tr></thead><tbody id="comprasBody"></tbody></table></div>';
-  comprasSearchQuery='';comprasFilterSit='';comprasFilterPgto='';applyComprasFilters();
+  pg.innerHTML='<div class="page-header"><h2>🛒 Compras</h2><div style="display:flex;gap:8px"><button class="btn btn-primary" onclick="openCompraModal()">+ Nova Compra</button></div></div><div class="dashboard-grid" id="comprasResultPanel"></div><div class="filter-bar"><input type="text" class="form-control" style="max-width:250px" placeholder="Buscar compra..." oninput="onComprasSearch(this.value)"><select class="form-control" style="max-width:160px" onchange="onComprasFilterSit(this.value)"><option value="">Situação (todas)</option>'+sitOpts+'</select><select class="form-control" style="max-width:160px" onchange="onComprasFilterPgto(this.value)"><option value="">Pgto (todos)</option>'+pgtoOpts+'</select></div><div class="table-responsive"><table class="table"><thead id="comprasHead"></thead><tbody id="comprasBody"></tbody></table></div>';
+  comprasSearchQuery='';comprasFilterSit='';comprasFilterPgto='';
+  renderComprasPageHeader();
+  applyComprasFilters();
+}
+function renderComprasPageHeader(){
+  var head = document.getElementById('comprasHead');
+  if(!head) return;
+  var h = function(label, col) {
+    return '<th style="cursor:pointer; user-select:none" onclick="toggleSort(\'compras\', \''+col+'\')">'+label+' <span style="font-size:10px; opacity:0.6">'+getSortIcon('compras', col)+'</span></th>';
+  };
+  head.innerHTML = '<tr>' + h('Data','data') + h('Produto','produto') + h('Fornecedor','fornecedor') + h('Qtd','quantidade') + h('V.Unit','valorUnit') + h('Total','total') + h('F.Pgto','formaPagamento') + h('Venc.','vencimento') + h('Situação','situacao') + '<th>Ações</th></tr>';
 }
 function renderComprasTable(compras){
   var tbody=document.getElementById('comprasBody');if(!tbody)return;
@@ -685,13 +729,18 @@ function applyComprasFilters(){
   if(comprasFilterPgto)list=list.filter(function(c){return c.formaPagamento===comprasFilterPgto;});
   
   list.sort(function(a, b) {
-    var pA = (a.produto || '').trim().toUpperCase();
-    var pB = (b.produto || '').trim().toUpperCase();
-    if(pA !== pB) return pA.localeCompare(pB);
-    var fA = (a.fornecedor || '').trim().toUpperCase();
-    var fB = (b.fornecedor || '').trim().toUpperCase();
-    if(fA !== fB) return fA.localeCompare(fB);
-    return (b.data || '').localeCompare(a.data || '');
+    var valA = a[comprasSortCol];
+    var valB = b[comprasSortCol];
+    if(comprasSortCol === 'total') {
+      valA = (a.quantidade||1)*(a.valorUnit||0);
+      valB = (b.quantidade||1)*(b.valorUnit||0);
+    }
+    if(typeof valA === 'string') valA = valA.toLowerCase();
+    if(typeof valB === 'string') valB = valB.toLowerCase();
+
+    if (valA < valB) return comprasSortDir === 'asc' ? -1 : 1;
+    if (valA > valB) return comprasSortDir === 'asc' ? 1 : -1;
+    return 0;
   });
 
   renderComprasTable(list);
@@ -702,7 +751,22 @@ function renderComprasResultPanel(list){var panel=document.getElementById('compr
 // ══════════════════════════════════════════════════════════════
 // ── VENDAS ──
 // ══════════════════════════════════════════════════════════════
-function renderVendasPage(){var pg=document.getElementById('page-vendas');if(!pg)return;var sitOpts=(appData.situacaoVenda||[]).map(function(s){return'<option value="'+s+'">'+s+'</option>';}).join('');pg.innerHTML='<div class="page-header"><h2>💰 Vendas</h2><div style="display:flex;gap:8px"><button class="btn btn-primary" onclick="openVendaModal()">+ Nova Venda</button></div></div><div class="dashboard-grid" id="vendasResultPanel"></div><div class="filter-bar"><input type="text" class="form-control" style="max-width:250px" placeholder="Buscar venda..." oninput="onVendasSearch(this.value)"><select class="form-control" style="max-width:160px" onchange="onVendasFilterSit(this.value)"><option value="">Situação (todas)</option>'+sitOpts+'</select></div><div class="table-responsive"><table class="table"><thead><tr><th>Data</th><th>Produto</th><th>Cliente</th><th>Qtd</th><th>V.Unit</th><th>Total</th><th>F.Pgto</th><th>Situação Pgto</th><th>Entrega</th><th>Ações</th></tr></thead><tbody id="vendasBody"></tbody></table></div>';vendasSearchQuery='';vendasFilterSit='';applyVendasFilters();}
+function renderVendasPage(){
+  var pg=document.getElementById('page-vendas');if(!pg)return;
+  var sitOpts=(appData.situacaoVenda||[]).map(function(s){return'<option value="'+s+'">'+s+'</option>';}).join('');
+  pg.innerHTML='<div class="page-header"><h2>💰 Vendas</h2><div style="display:flex;gap:8px"><button class="btn btn-primary" onclick="openVendaModal()">+ Nova Venda</button></div></div><div class="dashboard-grid" id="vendasResultPanel"></div><div class="filter-bar"><input type="text" class="form-control" style="max-width:250px" placeholder="Buscar venda..." oninput="onVendasSearch(this.value)"><select class="form-control" style="max-width:160px" onchange="onVendasFilterSit(this.value)"><option value="">Situação (todas)</option>'+sitOpts+'</select></div><div class="table-responsive"><table class="table"><thead id="vendasHead"></thead><tbody id="vendasBody"></tbody></table></div>';
+  vendasSearchQuery='';vendasFilterSit='';
+  renderVendasPageHeader();
+  applyVendasFilters();
+}
+function renderVendasPageHeader(){
+  var head = document.getElementById('vendasHead');
+  if(!head) return;
+  var h = function(label, col) {
+    return '<th style="cursor:pointer; user-select:none" onclick="toggleSort(\'vendas\', \''+col+'\')">'+label+' <span style="font-size:10px; opacity:0.6">'+getSortIcon('vendas', col)+'</span></th>';
+  };
+  head.innerHTML = '<tr>' + h('Data','data') + h('Produto','produto') + h('Cliente','cliente') + h('Qtd','quantidade') + h('V.Unit','valorUnit') + h('Total','total') + h('F.Pgto','formaPagamento') + h('Situação Pgto','situacao') + h('Entrega','entrega') + '<th>Ações</th></tr>';
+}
 function renderVendasTable(vendas){var tbody=document.getElementById('vendasBody');if(!tbody)return;if(vendas.length===0){tbody.innerHTML='<tr><td colspan="10" style="text-align:center;padding:40px;color:var(--text-muted)">Nenhuma venda encontrada</td></tr>';return;}var sitOpts=(appData.situacaoVenda||[]);var entregaOpts=(appData.situacaoEntrega||[]);tbody.innerHTML=vendas.map(function(v){var total=(v.quantidade||1)*(v.valorUnit||0);var liq = v.valorLiquido !== undefined ? v.valorLiquido : total;var totalDisplay = formatCurrency(liq); if(liq < total){ totalDisplay = '<span title="Bruto: '+formatCurrency(total)+'">'+formatCurrency(liq)+'</span> <small style="display:block; font-size:9px; color:var(--text-muted)">Taxa: '+v.taxa+'%</small>'; } var sitSelect='<select class="form-control" style="min-width:100px;padding:4px 6px;font-size:12px" onchange="changeVendaField('+v.id+',\'situacao\',this.value)">'+sitOpts.map(function(s){return'<option value="'+s+'"'+(v.situacao===s?' selected':'')+'>'+s+'</option>';}).join('')+'</select>';var entregaSelect='<select class="form-control" style="min-width:100px;padding:4px 6px;font-size:12px" onchange="changeVendaField('+v.id+',\'entrega\',this.value)">'+entregaOpts.map(function(s){return'<option value="'+s+'"'+(v.entrega===s?' selected':'')+'>'+s+'</option>';}).join('')+'</select>';var acoes='<button class="btn btn-sm btn-outline" onclick="viewVenda('+v.id+')">👁️</button> <button class="btn btn-sm btn-primary" onclick="editVenda('+v.id+')">✏️</button> <button class="btn btn-sm btn-danger" onclick="deleteVenda('+v.id+')">🗑️</button>';return'<tr><td>'+formatDate(v.data)+'</td><td>'+(v.produto||'-')+'</td><td>'+(v.cliente||'-')+'</td><td>'+(v.quantidade||1)+'</td><td>'+formatCurrency(v.valorUnit)+'</td><td>'+totalDisplay+'</td><td>'+(v.formaPagamento||'-')+'</td><td>'+sitSelect+'</td><td>'+entregaSelect+'</td><td>'+acoes+'</td></tr>';}).join('');}
 function changeVendaField(id,field,value){var v=(appData.vendas||[]).find(function(x){return x.id===id;});if(v){v[field]=value;saveData();applyVendasFilters();}}
 function onVendaProductChange(nome){
@@ -923,13 +987,18 @@ function applyVendasFilters(){
   if(vendasFilterSit)list=list.filter(function(v){return v.situacao===vendasFilterSit;});
   
   list.sort(function(a, b) {
-    var pA = (a.produto || '').trim().toUpperCase();
-    var pB = (b.produto || '').trim().toUpperCase();
-    if(pA !== pB) return pA.localeCompare(pB);
-    var cA = (a.cliente || '').trim().toUpperCase();
-    var cB = (b.cliente || '').trim().toUpperCase();
-    if(cA !== cB) return cA.localeCompare(cB);
-    return (b.data || '').localeCompare(a.data || '');
+    var valA = a[vendasSortCol];
+    var valB = b[vendasSortCol];
+    if(vendasSortCol === 'total') {
+      valA = a.valorLiquido !== undefined ? a.valorLiquido : (a.quantidade||1)*(a.valorUnit||0);
+      valB = b.valorLiquido !== undefined ? b.valorLiquido : (b.quantidade||1)*(b.valorUnit||0);
+    }
+    if(typeof valA === 'string') valA = valA.toLowerCase();
+    if(typeof valB === 'string') valB = valB.toLowerCase();
+
+    if (valA < valB) return vendasSortDir === 'asc' ? -1 : 1;
+    if (valA > valB) return vendasSortDir === 'asc' ? 1 : -1;
+    return 0;
   });
 
   renderVendasTable(list);
@@ -946,16 +1015,7 @@ panel.innerHTML='<div class="card"><div class="card-header"><span>Total Bruto</s
 // ══════════════════════════════════════════════════════════════
 // ── ESTOQUE ──
 // ══════════════════════════════════════════════════════════════
-function renderEstoquePage(){
-  var pg=document.getElementById('page-estoque');
-  if(!pg)return;
-  pg.innerHTML='<div class="page-header"><h2>📦 Estoque</h2><button class="btn btn-primary" onclick="openEstoqueModal()">+ Novo Item</button></div><div class="filter-bar"><input type="text" class="form-control" style="max-width:250px" placeholder="Buscar no estoque..." oninput="filterEstoque(this.value)"></div><div class="table-responsive"><table class="table"><thead><tr><th>Produto</th><th>Unidade</th><th>Qtd</th><th>V.Unit</th><th>Total</th><th>Local</th><th>Ações</th></tr></thead><tbody id="estoqueBody"></tbody></table></div>';
-  
-  var list = (appData.estoque || []).slice().sort(function(a, b) {
-    return (a.produto || '').trim().toUpperCase().localeCompare((b.produto || '').trim().toUpperCase());
-  });
-  renderEstoqueTable(list);
-}
+function renderEstoquePage(){var pg=document.getElementById('page-estoque');if(!pg)return;pg.innerHTML='<div class="page-header"><h2>📦 Estoque</h2><button class="btn btn-primary" onclick="openEstoqueModal()">+ Novo Item</button></div><div class="filter-bar"><input type="text" class="form-control" style="max-width:250px" placeholder="Buscar no estoque..." oninput="filterEstoque(this.value)"></div><div class="table-responsive"><table class="table"><thead><tr><th>Produto</th><th>Unidade</th><th>Qtd</th><th>V.Unit</th><th>Total</th><th>Local</th><th>Ações</th></tr></thead><tbody id="estoqueBody"></tbody></table></div>';renderEstoqueTable(appData.estoque||[]);}
 function renderEstoqueTable(list){var tbody=document.getElementById('estoqueBody');if(!tbody)return;if(list.length===0){tbody.innerHTML='<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--text-muted)">Estoque vazio</td></tr>';return;}tbody.innerHTML=list.map(function(e){var total=(e.quantidade||0)*(e.valorUnit||0);return'<tr><td>'+(e.produto||'-')+'</td><td>'+(e.unidade||'-')+'</td><td>'+(e.quantidade||0)+'</td><td>'+formatCurrency(e.valorUnit)+'</td><td>'+formatCurrency(total)+'</td><td>'+(e.local||'-')+'</td><td><button class="btn btn-sm btn-primary" onclick="editEstoque('+e.id+')">✏️</button> <button class="btn btn-sm btn-danger" onclick="deleteEstoque('+e.id+')">🗑️</button></td></tr>';}).join('');}
 function openEstoqueModal(item){var isEdit=!!item;var unOpts=(appData.tipoUnidade||[]).map(function(u){return'<option value="'+u+'"'+(item&&item.unidade===u?' selected':'')+'>'+u+'</option>';}).join('');document.getElementById('cadastroModalTitle').textContent=isEdit?'Editar Item':'Novo Item de Estoque';document.getElementById('cadastroModalBody').innerHTML='<div class="form-group"><label>Produto *</label><input type="text" class="form-control" id="estProd" value="'+(item?item.produto:'')+'"></div><div class="form-row"><div class="form-group"><label>Unidade</label><select class="form-control" id="estUn">'+unOpts+'</select></div><div class="form-group"><label>Qtd</label><input type="number" class="form-control" id="estQtd" value="'+(item?item.quantidade:0)+'" min="0"></div></div><div class="form-row"><div class="form-group"><label>Valor Unit.</label><input type="number" class="form-control" id="estValor" value="'+(item?item.valorUnit:'')+'" step="0.01"></div><div class="form-group"><label>Local</label><input type="text" class="form-control" id="estLocal" value="'+(item?item.local||'':'')+'"></div></div>';document.getElementById('cadastroModalFooter').innerHTML='<button class="btn btn-secondary" onclick="closeCadastroModal()">Cancelar</button><button class="btn btn-primary" onclick="saveEstoque('+(isEdit?item.id:'null')+')">Salvar</button>';openCadastroModal();}
 function saveEstoque(id){var obj={produto:document.getElementById('estProd').value.trim(),unidade:document.getElementById('estUn').value,quantidade:parseFloat(document.getElementById('estQtd').value)||0,valorUnit:parseFloat(document.getElementById('estValor').value)||0,local:document.getElementById('estLocal').value.trim()};if(!obj.produto){showToast('Informe o produto','error');return;}if(!appData.estoque)appData.estoque=[];if(id){var idx=appData.estoque.findIndex(function(e){return e.id===id;});if(idx>-1){obj.id=id;appData.estoque[idx]=obj;}}else{obj.id=nextId(appData.estoque);appData.estoque.push(obj);}saveData();closeCadastroModal();renderEstoquePage();showToast(id?'Atualizado!':'Cadastrado!','success');}
