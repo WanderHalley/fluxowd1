@@ -273,16 +273,16 @@ function openViewModal(){document.getElementById('viewModal').style.display='fle
 function closeViewModal(){document.getElementById('viewModal').style.display='none';}
 
 // ── SIDEBAR ──
-function toggleSidebar(){
-  var sb = document.getElementById('sidebar');
-  if(window.innerWidth <= 768){
-    sb.classList.toggle('open');
-    sb.classList.remove('collapsed');
-  } else {
-    sb.classList.toggle('collapsed');
-    sb.classList.remove('open');
-  }
-  syncExpandBtn();
+function toggleSidebar() {
+    var sidebar = document.getElementById('sidebar');
+    // Verifica se é mobile (largura até 768px)
+    if (window.innerWidth <= 768) {
+        sidebar.classList.toggle('open');
+    } else {
+        // Comportamento desktop original
+        sidebar.classList.toggle('collapsed');
+        syncExpandBtn();
+    }
 }
 function collapseSidebar(){
   var sb = document.getElementById('sidebar');
