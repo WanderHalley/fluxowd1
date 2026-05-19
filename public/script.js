@@ -275,19 +275,31 @@ function closeViewModal(){document.getElementById('viewModal').style.display='no
 // ── SIDEBAR ──
 function toggleSidebar(){
   var sb = document.getElementById('sidebar');
+  var overlay = document.getElementById('sidebarOverlay');
+  
   if(window.innerWidth <= 768){
-    sb.classList.toggle('open');
-    sb.classList.remove('collapsed');
+    var isOpen = sb.classList.contains('open');
+    if(isOpen){
+      sb.classList.remove('open');
+      if(overlay) overlay.classList.remove('show');
+    } else {
+      sb.classList.add('open');
+      sb.classList.remove('collapsed');
+      if(overlay) overlay.classList.add('show');
+    }
   } else {
     sb.classList.toggle('collapsed');
     sb.classList.remove('open');
+    if(overlay) overlay.classList.remove('show');
   }
   syncExpandBtn();
 }
 function collapseSidebar(){
   var sb = document.getElementById('sidebar');
-  sb.classList.toggle('collapsed');
+  var overlay = document.getElementById('sidebarOverlay');
+  sb.classList.add('collapsed');
   sb.classList.remove('open');
+  if(overlay) overlay.classList.remove('show');
   syncExpandBtn();
 }
 function syncExpandBtn(){var sb=document.getElementById('sidebar');var eb=document.getElementById('expandBtn');var ar=document.getElementById('collapseArrow');var c=sb.classList.contains('collapsed');if(eb)eb.style.display=c?'inline-flex':'none';if(ar)ar.textContent=c?'»':'«';}
@@ -311,7 +323,11 @@ var pageTitles={'dashboard':'Dashboard','janeiro':'Janeiro','fevereiro':'Feverei
 
 function navigateTo(page){
   var sb = document.getElementById('sidebar');
-  if(sb && sb.classList.contains('open')) sb.classList.remove('open'); // Close on mobile navigation
+  var overlay = document.getElementById('sidebarOverlay');
+  if(sb && sb.classList.contains('open')) {
+    sb.classList.remove('open');
+    if(overlay) overlay.classList.remove('show');
+  }
 
   document.querySelectorAll('.page-content').forEach(function(p){p.style.display='none';});
   var el=document.getElementById('page-'+page);if(el)el.style.display='block';
@@ -2013,6 +2029,9 @@ document.addEventListener('keydown',function(e){
   await loadData();
   updateSidebarInfo();
   document.getElementById('currentDate').textContent=new Date().toLocaleDateString('pt-BR',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  if(window.innerWidth <= 768){
+    collapseSidebar();
+  }
   renderDashboard();
   document.getElementById('cadastroModal').addEventListener('mousedown',function(e){if(e.target===this)closeCadastroModal();});
   document.getElementById('viewModal').addEventListener('mousedown',function(e){if(e.target===this)closeViewModal();});

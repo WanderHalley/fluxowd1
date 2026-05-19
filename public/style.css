@@ -224,6 +224,30 @@ body {
     color: var(--text-primary);
     font-size: 1.5rem;
     cursor: pointer;
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    z-index: 10;
+}
+
+/* SIDEBAR OVERLAY */
+.sidebar-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 95;
+    backdrop-filter: blur(2px);
+}
+
+.sidebar-overlay.show {
+    display: block;
 }
 
 .topbar-title {
@@ -632,15 +656,28 @@ body {
 @media (max-width: 768px) {
     .sidebar {
         position: fixed;
-        left: -260px;
+        left: -280px;
+        top: 0;
+        height: 100vh;
+        z-index: 1001; /* Higher than modal overlay if needed, but definitely above topbar */
         box-shadow: 10px 0 30px rgba(0,0,0,0.5);
         transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
-    .sidebar.open { left: 0; width: 260px; min-width: 260px; }
-    .sidebar.collapsed { left: -260px; }
+    .sidebar.open { 
+        left: 0; 
+        width: 260px; 
+        min-width: 260px; 
+        box-shadow: 10px 0 50px rgba(0,0,0,0.8); 
+        background: var(--bg-secondary) !important;
+    }
+    .sidebar.collapsed { left: -280px; }
     .sidebar-collapse-btn { display: none; }
     .expand-btn { display: none !important; }
-    .menu-toggle { display: block; }
+    .menu-toggle { 
+        display: flex; 
+        font-size: 1.8rem; 
+        padding-bottom: 4px; /* Align icon slightly */
+    }
     .dashboard-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
     .form-row { grid-template-columns: 1fr; }
     .detail-grid { grid-template-columns: 1fr; }
