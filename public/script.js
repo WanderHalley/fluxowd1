@@ -665,16 +665,16 @@ function onVendaProductChange(nome){
 function updateVendaCalc(){
   var pgto = document.getElementById('vnPgto') ? document.getElementById('vnPgto').value : '';
   var modo = document.getElementById('vnModo') ? document.getElementById('vnModo').value : 'À Vista';
-  var maqConfig = document.getElementById('vnMaqArea');
+  var modoArea = document.getElementById('vnModoArea');
+  var maqArea = document.getElementById('vnMaqArea');
   var calcArea = document.getElementById('vnCalcArea');
   
-  var isCreditCard = pgto === 'Cartão de Crédito' || pgto.toLowerCase().includes('cartão de crédito') || pgto.toLowerCase().includes('cartao de credito');
+  // Normalize string for comparison (remove accents)
+  var cleanPgto = pgto.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  var isCreditCard = cleanPgto.includes("cartao de credito");
   
-  if(isCreditCard){
-    if(maqConfig) maqConfig.style.display = 'block';
-  } else {
-    if(maqConfig) maqConfig.style.display = 'none';
-  }
+  if(modoArea) modoArea.style.display = isCreditCard ? 'block' : 'none';
+  if(maqArea) maqArea.style.display = (isCreditCard && modo === 'Dividido') ? 'block' : 'none';
 
   var qtd = parseFloat(document.getElementById('vnQtd').value) || 0;
   var val = parseFloat(document.getElementById('vnValor').value) || 0;
@@ -713,9 +713,11 @@ var maqOpts=(appData.maquininhas||[]).map(function(m){return'<option value="'+m.
 var parcOpts=''; for(var i=1;i<=12;i++){ parcOpts+='<option value="'+i+'"'+(venda&&venda.parcelas===i?' selected':'')+'>'+i+'x</option>'; }
 
 document.getElementById('cadastroModalTitle').textContent=isEdit?'Editar Venda':'Nova Venda';document.getElementById('cadastroModalBody').innerHTML='<div class="form-row"><div class="form-group"><label>Data</label><input type="date" class="form-control" id="vnData" value="'+(venda?venda.data:todayStr())+'"></div><div class="form-group"><label>Vendedor</label><select class="form-control" id="vnVendedor"><option value="">Selecione...</option>'+vendedorOpts+'</select></div></div><div class="form-group"><label>Produto *</label><select class="form-control" id="vnProd" onchange="onVendaProductChange(this.value)"><option value="">Selecione...</option>'+prodOpts+'</select></div><div class="form-row"><div class="form-group"><label>Qtd</label><input type="number" class="form-control" id="vnQtd" value="'+(venda?venda.quantidade:1)+'" min="1" oninput="updateVendaCalc()"></div><div class="form-group"><label>Valor Unit.</label><input type="number" class="form-control" id="vnValor" value="'+(venda?venda.valorUnit:'')+'" step="0.01" oninput="updateVendaCalc()"></div></div><div class="form-row"><div class="form-group"><label>Cliente</label><select class="form-control" id="vnCli"><option value="">Selecione...</option>'+cliOpts+'</select></div><div class="form-group"><label>Forma Pgto</label><select class="form-control" id="vnPgto" onchange="updateVendaCalc()"><option value="">Selecione...</option>'+pgtoOpts+'</select></div></div>' +
+'<div id="vnModoArea" style="display:none; background:rgba(255,255,255,0.03); padding:10px; border-radius:8px; margin-bottom:5px">' +
+    '<div class="form-group"><label>Tipo de Pagamento</label><select class="form-control" id="vnModo" onchange="updateVendaCalc()"><option value="À Vista" '+(venda&&venda.modo==='À Vista'?'selected':'')+'>À Vista</option><option value="Dividido" '+(venda&&venda.modo==='Dividido'?'selected':'')+'>Dividido</option></select></div>' +
+'</div>' +
 '<div id="vnMaqArea" style="display:none; background:rgba(255,255,255,0.03); padding:10px; border-radius:8px; margin-bottom:15px">' +
   '<div class="form-row">' +
-    '<div class="form-group"><label>Modo</label><select class="form-control" id="vnModo" onchange="updateVendaCalc()"><option value="À Vista" '+(venda&&venda.modo==='À Vista'?'selected':'')+'>À Vista</option><option value="Dividido" '+(venda&&venda.modo==='Dividido'?'selected':'')+'>Dividido</option></select></div>' +
     '<div class="form-group"><label>Maquininha</label><select class="form-control" id="vnMaq" onchange="updateVendaCalc()">'+maqOpts+'</select></div>' +
     '<div class="form-group"><label>Parcelas</label><select class="form-control" id="vnParcelas" onchange="updateVendaCalc()">'+parcOpts+'</select></div>' +
   '</div>' +
@@ -725,16 +727,17 @@ document.getElementById('cadastroModalTitle').textContent=isEdit?'Editar Venda':
 function saveVenda(id){
   var qtd = parseFloat(document.getElementById('vnQtd').value)||1;
   var val = parseFloat(document.getElementById('vnValor').value)||0;
-  var pgto = document.getElementById('vnPgto').value;
-  var modo = document.getElementById('vnModo').value;
-  var maqId = parseInt(document.getElementById('vnMaq').value);
-  var parcelas = parseInt(document.getElementById('vnParcelas').value);
+  var pgto = document.getElementById('vnPgto') ? document.getElementById('vnPgto').value : '';
+  var modo = document.getElementById('vnModo') ? document.getElementById('vnModo').value : 'À Vista';
+  var maqId = document.getElementById('vnMaq') ? parseInt(document.getElementById('vnMaq').value) : 0;
+  var parcelas = document.getElementById('vnParcelas') ? parseInt(document.getElementById('vnParcelas').value) : 1;
   
   var totalBruto = qtd * val;
   var liqVal = totalBruto;
   var taxa = 0;
 
-  var isCreditCard = pgto === 'Cartão de Crédito' || pgto.toLowerCase().includes('cartão de crédito') || pgto.toLowerCase().includes('cartao de credito');
+  var cleanPgto = pgto.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  var isCreditCard = cleanPgto.includes("cartao de credito");
 
   if(isCreditCard && modo === 'Dividido'){
     var maq = (appData.maquininhas||[]).find(function(m){return m.id === maqId;});
@@ -752,9 +755,9 @@ function saveVenda(id){
     totalBruto: totalBruto,
     valorLiquido: liqVal,
     taxa: taxa,
-    modo: modo,
-    maquininhaId: isCreditCard ? maqId : null,
-    parcelas: isCreditCard ? parcelas : null,
+    modo: isCreditCard ? modo : 'À Vista',
+    maquininhaId: (isCreditCard && modo === 'Dividido') ? maqId : null,
+    parcelas: (isCreditCard && modo === 'Dividido') ? parcelas : null,
     cliente:document.getElementById('vnCli').value,
     formaPagamento:pgto,
     situacao:document.getElementById('vnSit').value,
