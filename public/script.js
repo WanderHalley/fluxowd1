@@ -8,6 +8,7 @@
 const SUPABASE_URL = 'https://iwbsmsadctvndhrcjkbw.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_GQpRJ7CFZOFrdmYfsN8rcA_ucfNR2AM';
 let supabaseClient = null;
+let syncStatus = 'waiting'; // 'waiting', 'ok', 'error', 'offline'
 let appData = {};
 let comprasEditMode = false;
 let vendasEditMode = false;
@@ -131,29 +132,116 @@ function getDefaultData(){
   };
 }
 
+// ── SYNC UI ──
+function updateSyncUI(){
+  var icon = document.getElementById('syncIcon');
+  var text = document.getElementById('syncText');
+  if(!icon || !text) return;
+  if(syncStatus === 'ok'){
+    icon.textContent = '✅';
+    text.textContent = 'Sincronizado';
+    text.style.color = '#38a169';
+  } else if(syncStatus === 'syncing'){
+    icon.textContent = '🔄';
+    text.textContent = 'Sincronizando...';
+    text.style.color = '#3182ce';
+  } else if(syncStatus === 'error'){
+    icon.textContent = '❌';
+    text.textContent = 'Erro na nuvem';
+    text.style.color = '#e53e3e';
+  } else if(syncStatus === 'offline'){
+    icon.textContent = '📶';
+    text.textContent = 'Modo Local';
+    text.style.color = 'var(--text-muted)';
+  }
+}
+
 // ── LOAD / SAVE ──
 async function loadData(){
-  if(supabaseClient){try{var r=await supabaseClient.from('wdmaquinas_data').select('*').eq('id',1).single();if(r.data&&r.data.payload){appData=typeof r.data.payload==='string'?JSON.parse(r.data.payload):r.data.payload;ensureDefaults();return;}}catch(e){console.warn('Supabase load falhou:',e.message);}}
-  try{var local=localStorage.getItem('wdmaquinas_data');if(local){appData=JSON.parse(local);ensureDefaults();return;}}catch(e){}
-  appData=getDefaultData();
+  syncStatus = 'syncing';
+  updateSyncUI();
+  
+  if(supabaseClient){
+    try{
+      var r = await supabaseClient.from('wdmaquinas_data').select('*').eq('id',1).single();
+      if(r.error) {
+        if(r.error.code !== 'PGRST116') { // PGRST116 is "no rows returned"
+           console.warn('Supabase load error:', r.error.message);
+           syncStatus = 'error';
+        } else {
+           // No data in cloud yet
+           syncStatus = 'ok'; 
+        }
+      } else if(r.data && r.data.payload){
+        appData = typeof r.data.payload === 'string' ? JSON.parse(r.data.payload) : r.data.payload;
+        ensureDefaults();
+        syncStatus = 'ok';
+        updateSyncUI();
+        return;
+      }
+    } catch(e){
+      console.warn('Supabase load failure:', e.message);
+      syncStatus = 'error';
+    }
+  }
+
+  // Fallback to local
+  try{
+    var local = localStorage.getItem('wdmaquinas_data');
+    if(local){
+      appData = JSON.parse(local);
+      ensureDefaults();
+      if(syncStatus !== 'error') syncStatus = 'offline';
+      updateSyncUI();
+      return;
+    }
+  }catch(e){}
+  
+  appData = getDefaultData();
+  if(syncStatus !== 'error') syncStatus = 'offline';
+  updateSyncUI();
 }
+
 async function saveData(){
   // Salva snapshot para undo (máx 10)
   if(!undoSaving){
-    undoSaving=true;
+    undoSaving = true;
     try{
-      var snapshot=JSON.stringify(appData);
-      // Evita duplicar se igual ao último
-      if(undoHistory.length===0||undoHistory[undoHistory.length-1]!==snapshot){
+      var snapshot = JSON.stringify(appData);
+      if(undoHistory.length === 0 || undoHistory[undoHistory.length-1] !== snapshot){
         undoHistory.push(snapshot);
-        if(undoHistory.length>undoMaxSteps) undoHistory.shift();
-        redoHistory=[];// limpa redo ao fazer nova ação
+        if(undoHistory.length > undoMaxSteps) undoHistory.shift();
+        redoHistory = [];
       }
     }catch(e){}
-    undoSaving=false;
+    undoSaving = false;
   }
-  try{localStorage.setItem('wdmaquinas_data',JSON.stringify(appData));}catch(e){}
-  if(supabaseClient){try{await supabaseClient.from('wdmaquinas_data').upsert({id:1,payload:appData,updated_at:new Date().toISOString()});}catch(e){}}
+
+  // Local storage
+  try{localStorage.setItem('wdmaquinas_data', JSON.stringify(appData));}catch(e){}
+
+  // Cloud storage
+  if(supabaseClient){
+    syncStatus = 'syncing';
+    updateSyncUI();
+    try{
+      var r = await supabaseClient.from('wdmaquinas_data').upsert({
+        id: 1, 
+        payload: appData, 
+        updated_at: new Date().toISOString()
+      });
+      if(r.error){
+        console.warn('Supabase save error:', r.error.message);
+        syncStatus = 'error';
+      } else {
+        syncStatus = 'ok';
+      }
+    } catch(e){
+      console.warn('Supabase save failure:', e.message);
+      syncStatus = 'error';
+    }
+    updateSyncUI();
+  }
   updateBackupBadge();
 }
 function updateBackupBadge(){
@@ -1477,6 +1565,10 @@ function renderBackupPage(){
             '<span style="color:var(--text-muted);font-size:0.8rem">Status da conexão: </span>'+sStatus+
           '</div>'+
           '<p style="color:var(--text-secondary);margin-bottom:12px">URL: <code style="color:var(--accent-secondary)">'+SUPABASE_URL+'</code></p>'+
+          '<div style="background:rgba(0,0,0,0.05);padding:10px;border-radius:4px;margin-bottom:12px;font-size:0.85rem">'+
+            '<p style="margin-bottom:4px"><b>⚠️ Requisito:</b> A tabela deve existir no Supabase!</p>'+
+            '<code style="font-size:0.75rem;display:block;white-space:pre">Nome: wdmaquinas_data\\nColunas:\\n- id (int8, PK)\\n- payload (jsonb)\\n- updated_at (timestamptz)</code>'+
+          '</div>'+
           '<div style="display:flex;gap:12px;flex-wrap:wrap">'+
             '<button class="btn btn-primary" onclick="forceSyncSupabase()">☁️ Forçar Sincronização</button>'+
             '<button class="btn btn-secondary" onclick="loadFromSupabase()">📥 Carregar do Supabase</button>'+
@@ -1605,30 +1697,53 @@ function resetAllData(){
 
 async function forceSyncSupabase(){
   if(!supabaseClient){showToast('Supabase não conectado','error');return;}
+  syncStatus = 'syncing';
+  updateSyncUI();
   try{
-    await supabaseClient.from('wdmaquinas_data').upsert({id:1,payload:appData,updated_at:new Date().toISOString()});
-    showToast('Dados sincronizados com Supabase!','success');
-  }catch(e){showToast('Erro: '+e.message,'error');}
+    var r = await supabaseClient.from('wdmaquinas_data').upsert({id:1,payload:appData,updated_at:new Date().toISOString()});
+    if(r.error){
+      showToast('Erro Supabase: '+r.error.message,'error');
+      syncStatus = 'error';
+    } else {
+      showToast('Dados sincronizados com Supabase!','success');
+      syncStatus = 'ok';
+    }
+  }catch(e){
+    showToast('Erro crítico: '+e.message,'error');
+    syncStatus = 'error';
+  }
+  updateSyncUI();
 }
 
 async function loadFromSupabase(){
   if(!supabaseClient){showToast('Supabase não conectado','error');return;}
   if(!confirm('Carregar dados do Supabase? Os dados locais serão substituídos!')) return;
+  syncStatus = 'syncing';
+  updateSyncUI();
   try{
     var r=await supabaseClient.from('wdmaquinas_data').select('*').eq('id',1).single();
-    if(r.data&&r.data.payload){
+    if(r.error){
+      showToast('Erro ao carregar: '+r.error.message,'error');
+      syncStatus = 'error';
+    } else if(r.data && r.data.payload){
       undoHistory.push(JSON.stringify(appData));
       if(undoHistory.length>undoMaxSteps) undoHistory.shift();
       appData=typeof r.data.payload==='string'?JSON.parse(r.data.payload):r.data.payload;
       ensureDefaults();
       try{localStorage.setItem('wdmaquinas_data',JSON.stringify(appData));}catch(e){}
       updateSidebarInfo();
-      showToast('Dados carregados do Supabase!','success');
+      showToast('Dados carregados com sucesso!','success');
+      syncStatus = 'ok';
       navigateTo('dashboard');
     } else {
       showToast('Nenhum dado encontrado no Supabase','error');
+      syncStatus = 'ok'; // Success communication, just no data
     }
-  }catch(e){showToast('Erro: '+e.message,'error');}
+  }catch(e){
+    showToast('Erro crítico: '+e.message,'error');
+    syncStatus = 'error';
+  }
+  updateSyncUI();
 }
 // ── ATALHOS CTRL+Z / CTRL+Y ──
 document.addEventListener('keydown',function(e){
