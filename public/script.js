@@ -276,21 +276,19 @@ function closeViewModal(){document.getElementById('viewModal').style.display='no
 function toggleSidebar(){
   var sb = document.getElementById('sidebar');
   var overlay = document.getElementById('sidebarOverlay');
-  var isMobile = screen.width <= 768 || window.innerWidth <= 768;
+  var isMobile = window.matchMedia("(max-width: 768px)").matches;
   
   if(isMobile){
-    // Mobile logic
+    sb.classList.toggle('open');
     var isOpen = sb.classList.contains('open');
+    console.log('Mobile sidebar toggle:', isOpen);
     if(isOpen){
-      sb.classList.remove('open');
-      if(overlay) overlay.classList.remove('show');
-    } else {
-      sb.classList.add('open');
       sb.classList.remove('collapsed');
       if(overlay) overlay.classList.add('show');
+    } else {
+      if(overlay) overlay.classList.remove('show');
     }
   } else {
-    // Desktop logic
     sb.classList.remove('open');
     sb.classList.toggle('collapsed');
     if(overlay) overlay.classList.remove('show');
@@ -2036,6 +2034,8 @@ document.addEventListener('keydown',function(e){
     collapseSidebar();
   }
   renderDashboard();
+  var mobileMenuBtn = document.getElementById('mobileMenuBtn');
+  if(mobileMenuBtn) mobileMenuBtn.addEventListener('click', function(e){ e.stopPropagation(); toggleSidebar(); });
   document.getElementById('cadastroModal').addEventListener('mousedown',function(e){if(e.target===this)closeCadastroModal();});
   document.getElementById('viewModal').addEventListener('mousedown',function(e){if(e.target===this)closeViewModal();});
 })();
