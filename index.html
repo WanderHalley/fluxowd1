@@ -11,7 +11,6 @@
     <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/2652/2652218.png">
 </head>
 <body>
-<div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
 <div class="app-container">
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-header">
@@ -85,7 +84,7 @@
     <main class="main-content">
         <div class="topbar">
             <div class="topbar-left">
-                <button class="menu-toggle" id="mobileMenuBtn" onclick="event.stopPropagation(); toggleSidebar()" aria-label="Menu">☰</button>
+                <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
                 <button class="expand-btn" id="expandBtn" onclick="collapseSidebar()" style="display:none;" title="Expandir menu">»</button>
                 <span class="topbar-title" id="pageTitle">Dashboard</span>
             </div>

@@ -275,33 +275,19 @@ function closeViewModal(){document.getElementById('viewModal').style.display='no
 // ── SIDEBAR ──
 function toggleSidebar(){
   var sb = document.getElementById('sidebar');
-  var overlay = document.getElementById('sidebarOverlay');
-  if(!sb) return;
-  
-  var isMobile = window.innerWidth <= 768;
-  
-  if(isMobile){
+  if(window.innerWidth <= 768){
     sb.classList.toggle('open');
-    var isOpen = sb.classList.contains('open');
-    if(isOpen){
-      sb.classList.remove('collapsed');
-      if(overlay) overlay.classList.add('show');
-    } else {
-      if(overlay) overlay.classList.remove('show');
-    }
+    sb.classList.remove('collapsed');
   } else {
-    sb.classList.remove('open');
     sb.classList.toggle('collapsed');
-    if(overlay) overlay.classList.remove('show');
+    sb.classList.remove('open');
   }
   syncExpandBtn();
 }
 function collapseSidebar(){
   var sb = document.getElementById('sidebar');
-  var overlay = document.getElementById('sidebarOverlay');
-  sb.classList.add('collapsed');
+  sb.classList.toggle('collapsed');
   sb.classList.remove('open');
-  if(overlay) overlay.classList.remove('show');
   syncExpandBtn();
 }
 function syncExpandBtn(){var sb=document.getElementById('sidebar');var eb=document.getElementById('expandBtn');var ar=document.getElementById('collapseArrow');var c=sb.classList.contains('collapsed');if(eb)eb.style.display=c?'inline-flex':'none';if(ar)ar.textContent=c?'»':'«';}
@@ -325,11 +311,7 @@ var pageTitles={'dashboard':'Dashboard','janeiro':'Janeiro','fevereiro':'Feverei
 
 function navigateTo(page){
   var sb = document.getElementById('sidebar');
-  var overlay = document.getElementById('sidebarOverlay');
-  if(sb && sb.classList.contains('open')) {
-    sb.classList.remove('open');
-    if(overlay) overlay.classList.remove('show');
-  }
+  if(sb && sb.classList.contains('open')) sb.classList.remove('open'); // Close on mobile navigation
 
   document.querySelectorAll('.page-content').forEach(function(p){p.style.display='none';});
   var el=document.getElementById('page-'+page);if(el)el.style.display='block';
@@ -2031,24 +2013,7 @@ document.addEventListener('keydown',function(e){
   await loadData();
   updateSidebarInfo();
   document.getElementById('currentDate').textContent=new Date().toLocaleDateString('pt-BR',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
-  if(window.innerWidth <= 768){
-    collapseSidebar();
-  }
   renderDashboard();
   document.getElementById('cadastroModal').addEventListener('mousedown',function(e){if(e.target===this)closeCadastroModal();});
   document.getElementById('viewModal').addEventListener('mousedown',function(e){if(e.target===this)closeViewModal();});
 })();
-
-// Adiciona listener fora do async init para garantir execução rápida
-window.addEventListener('load', function() {
-  var mobileBtn = document.getElementById('mobileMenuBtn');
-  if(mobileBtn) {
-    mobileBtn.onclick = function(e){ e.stopPropagation(); toggleSidebar(); };
-    mobileBtn.ontouchstart = function(e){ e.stopPropagation(); toggleSidebar(); e.preventDefault(); };
-  }
-  var overlay = document.getElementById('sidebarOverlay');
-  if(overlay) {
-    overlay.onclick = function(){ toggleSidebar(); };
-    overlay.ontouchstart = function(){ toggleSidebar(); };
-  }
-});
