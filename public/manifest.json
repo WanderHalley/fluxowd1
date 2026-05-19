@@ -1,0 +1,16 @@
+{
+  "name": "WD Máquinas - Fluxo de Caixa",
+  "short_name": "WD Máquinas",
+  "description": "Sistema de Controle de Fluxo de Caixa WD Máquinas",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0a0a",
+  "theme_color": "#3B82F6",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/2652/2652218.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

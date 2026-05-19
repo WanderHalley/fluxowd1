@@ -95,8 +95,9 @@ function handleImageUpload(inputId,previewId){
     var reader=new FileReader();
     reader.onload=function(e){
       var prev=document.getElementById(previewId);
-      if(prev) prev.innerHTML='<img src="'+e.target.result+'" style="max-width:200px;max-height:150px;border-radius:8px;object-fit:cover">';
+      if(prev) prev.innerHTML='<img src="'+e.target.result+'" style="max-width:200px;max-height:80px;border-radius:8px;object-fit:contain;background:rgba(255,255,255,0.05);padding:10px">';
       input.setAttribute('data-base64',e.target.result);
+      showToast('Imagem carregada com sucesso! Clique em salvar no final da seção.','success');
     };
     reader.readAsDataURL(file);
   });
@@ -267,8 +268,18 @@ function openViewModal(){document.getElementById('viewModal').style.display='fle
 function closeViewModal(){document.getElementById('viewModal').style.display='none';}
 
 // ── SIDEBAR ──
-function toggleSidebar(){document.getElementById('sidebar').classList.toggle('collapsed');syncExpandBtn();}
-function collapseSidebar(){document.getElementById('sidebar').classList.toggle('collapsed');syncExpandBtn();}
+function toggleSidebar(){
+  var sb = document.getElementById('sidebar');
+  sb.classList.toggle('collapsed'); 
+  sb.classList.toggle('open');
+  syncExpandBtn();
+}
+function collapseSidebar(){
+  var sb = document.getElementById('sidebar');
+  sb.classList.toggle('collapsed');
+  sb.classList.remove('open');
+  syncExpandBtn();
+}
 function syncExpandBtn(){var sb=document.getElementById('sidebar');var eb=document.getElementById('expandBtn');var ar=document.getElementById('collapseArrow');var c=sb.classList.contains('collapsed');if(eb)eb.style.display=c?'inline-flex':'none';if(ar)ar.textContent=c?'»':'«';}
 function updateSidebarInfo(){
   var ne=document.getElementById('sidebarNome');var ce=document.getElementById('sidebarCnpj');
@@ -282,6 +293,9 @@ function updateSidebarInfo(){
 var pageTitles={'dashboard':'Dashboard','janeiro':'Janeiro','fevereiro':'Fevereiro','marco':'Março','abril':'Abril','maio':'Maio','junho':'Junho','julho':'Julho','agosto':'Agosto','setembro':'Setembro','outubro':'Outubro','novembro':'Novembro','dezembro':'Dezembro','compras':'Compras','vendas':'Vendas','estoque':'Estoque','produtos':'Produtos','clientes':'Clientes','fornecedores':'Fornecedores','pfornecedores':'P. Fornecedores','boletos':'Boletos','cheques':'Cheques','prestacoes':'Prestações','projetos':'Projetos','pagclientes':'Pag. Clientes','garantias':'Garantias','relatorios':'Relatórios','notasentrada':'Notas Entrada','notassaida':'Notas Saída','receitasmei':'Receitas MEI','configuracoes':'Configurações','backup':'Backup'};
 
 function navigateTo(page){
+  var sb = document.getElementById('sidebar');
+  if(sb && sb.classList.contains('open')) sb.classList.remove('open'); // Close on mobile navigation
+
   document.querySelectorAll('.page-content').forEach(function(p){p.style.display='none';});
   var el=document.getElementById('page-'+page);if(el)el.style.display='block';
   var te=document.getElementById('pageTitle');if(te)te.textContent=pageTitles[page]||page;
@@ -1765,6 +1779,13 @@ document.addEventListener('keydown',function(e){
 // ── INICIALIZAÇÃO ──
 // ══════════════════════════════════════════════════════════════
 (async function init(){
+  // PWA Registration
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js').catch(err => console.warn('SW failed', err));
+    });
+  }
+
   try{supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);}catch(e){console.warn('Supabase não disponível:',e.message);}
   await loadData();
   updateSidebarInfo();
@@ -1772,5 +1793,4 @@ document.addEventListener('keydown',function(e){
   renderDashboard();
   document.getElementById('cadastroModal').addEventListener('mousedown',function(e){if(e.target===this)closeCadastroModal();});
   document.getElementById('viewModal').addEventListener('mousedown',function(e){if(e.target===this)closeViewModal();});
-  document.querySelector('.menu-toggle').addEventListener('click',function(){document.getElementById('sidebar').classList.toggle('active');});
 })();

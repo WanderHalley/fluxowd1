@@ -633,6 +633,8 @@ body {
     .sidebar {
         position: fixed;
         left: -260px;
+        box-shadow: 10px 0 30px rgba(0,0,0,0.5);
+        transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
     .sidebar.open { left: 0; width: 260px; min-width: 260px; }
     .sidebar.collapsed { left: -260px; }
@@ -642,6 +644,10 @@ body {
     .dashboard-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
     .form-row { grid-template-columns: 1fr; }
     .detail-grid { grid-template-columns: 1fr; }
+    
+    .main-content { margin-left: 0 !important; }
+    
+    .modal { width: 95%; padding: 10px; }
 }
 /* ==========================================
    CONFIGURAÇÕES — Layout bonito + Drag & Drop
