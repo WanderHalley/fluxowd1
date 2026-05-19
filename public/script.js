@@ -293,7 +293,14 @@ function updateSidebarInfo(){
   if(ne&&appData.empresa) ne.textContent=appData.empresa.nome||'WD Máquinas';
   if(ce&&appData.empresa) ce.textContent='CNPJ: '+(appData.empresa.cnpj||'');
   var le=document.getElementById('sidebarLogo');
-  if(le&&appData.empresa&&appData.empresa.logo){le.src=appData.empresa.logo;le.style.display='block';}
+  if(le){
+    if(appData.empresa && appData.empresa.logo){
+      le.src=appData.empresa.logo;
+      le.style.display='block';
+    } else {
+      le.style.display='none';
+    }
+  }
 }
 
 // ── NAVEGAÇÃO ──
@@ -1367,15 +1374,16 @@ function renderConfiguracoesPage(){
             '<div class="logo-upload-area" id="cfgLogoPreview" onclick="document.getElementById(\'cfgLogoInput\').click()">'+
               (emp.logo?'<img src="'+emp.logo+'" style="max-width:200px;max-height:80px;object-fit:contain">':'<div class="upload-text">Clique para enviar a logo</div>')+
               '<div class="upload-hint">JPG, PNG ou WEBP — máx 2 MB</div>'+
-              '<input type="file" id="cfgLogoInput" accept="image/*" style="display:none">'+
             '</div>'+
+            '<input type="file" id="cfgLogoInput" accept="image/*" style="display:none" onclick="event.stopPropagation()">'+
+            '<button class="btn btn-sm btn-outline" style="margin-top:8px; width:100%" onclick="saveCfgEmpresa()">✨ Aplicar Logo no Sistema</button>'+
           '</div>'+
           '<div class="form-group"><label>Assinatura (imagem)</label>'+
             '<div class="logo-upload-area" id="cfgAssPreview" onclick="document.getElementById(\'cfgAssInput\').click()">'+
               (emp.assinatura?'<img src="'+emp.assinatura+'" style="max-width:200px;max-height:80px;object-fit:contain">':'<div class="upload-text">Clique para enviar</div>')+
               '<div class="upload-hint">JPG, PNG ou WEBP — máx 2 MB</div>'+
-              '<input type="file" id="cfgAssInput" accept="image/*" style="display:none">'+
             '</div>'+
+            '<input type="file" id="cfgAssInput" accept="image/*" style="display:none" onclick="event.stopPropagation()">'+
           '</div>'+
         '</div>'+
         '<div style="margin-top:12px"><button class="btn btn-primary" onclick="saveCfgEmpresa()">💾 Salvar Dados da Empresa</button></div>'+
