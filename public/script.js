@@ -822,41 +822,36 @@ function saveVenda(id){
   };
   if(!obj.produto){showToast('Informe o produto','error');return;}
   if(!appData.vendas)appData.vendas=[];
+
+  function linkVendaAutomation(vendaObj) {
+    var clean = (vendaObj.formaPagamento || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    var isBol = clean.includes("boleto") && vendaObj.boletoModo === 'Prazo';
+    var isChq = clean.includes("cheque");
+    if (isBol) {
+      if (!appData.boletos) appData.boletos = [];
+      var exists = appData.boletos.some(function(b) { return b.vendaId === vendaObj.id; });
+      if (!exists) {
+        var venc = new Date(vendaObj.data + 'T00:00:00');
+        venc.setDate(venc.getDate() + (vendaObj.boletoDias || 0));
+        appData.boletos.push({ id: nextId(appData.boletos), descricao: 'Venda ' + (vendaObj.produto || '-') + ' - ' + (vendaObj.cliente || '-'), valor: vendaObj.valorLiquido, vencimento: venc.toISOString().split('T')[0], situacao: 'Pendente', vendaId: vendaObj.id, obs: 'Gerado automaticamente da venda' });
+      }
+    }
+    if (isChq) {
+      if (!appData.cheques) appData.cheques = [];
+      var exists = appData.cheques.some(function(c) { return c.vendaId === vendaObj.id; });
+      if (!exists) {
+        appData.cheques.push({ id: nextId(appData.cheques), numero: '', emitente: vendaObj.cliente || '-', valor: vendaObj.valorLiquido, bomPara: vendaObj.data, situacao: 'Em mãos', vendaId: vendaObj.id, obs: 'Gerado automaticamente da venda' });
+      }
+    }
+  }
+
   if(id){
     var idx=appData.vendas.findIndex(function(v){return v.id===id;});
-    if(idx>-1){obj.id=id;appData.vendas[idx]=obj;}
+    if(idx>-1){ obj.id=id; appData.vendas[idx]=obj; linkVendaAutomation(obj); }
   }else{
     obj.id=nextId(appData.vendas);
     appData.vendas.push(obj);
-
-    // Automação: Enviar para Boletos ou Cheques
-    if(isBoleto && bModo === 'Prazo'){
-      if(!appData.boletos) appData.boletos = [];
-      var venc = new Date(obj.data + 'T00:00:00');
-      venc.setDate(venc.getDate() + (obj.boletoDias || 0));
-      appData.boletos.push({
-        id: nextId(appData.boletos),
-        descricao: 'Venda ' + (obj.produto || '-') + ' - ' + (obj.cliente || '-'),
-        valor: obj.valorLiquido,
-        vencimento: venc.toISOString().split('T')[0],
-        situacao: 'Pendente',
-        vendaId: obj.id,
-        obs: 'Gerado automaticamente da venda'
-      });
-    }
-    if(isCheque){
-      if(!appData.cheques) appData.cheques = [];
-      appData.cheques.push({
-        id: nextId(appData.cheques),
-        numero: '',
-        emitente: obj.cliente || '-',
-        valor: obj.valorLiquido,
-        bomPara: obj.data,
-        situacao: 'Em mãos',
-        vendaId: obj.id,
-        obs: 'Gerado automaticamente da venda'
-      });
-    }
+    linkVendaAutomation(obj);
   }
   saveData();closeCadastroModal();renderVendasPage();showToast(id?'Venda atualizada!':'Venda cadastrada!','success');
 }
