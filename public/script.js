@@ -788,6 +788,7 @@ function saveVenda(id){
   var cleanPgto = pgto.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
   var isCreditCard = cleanPgto.includes("cartao de credito");
   var isBoleto = cleanPgto.includes("boleto");
+  var isCheque = cleanPgto.includes("cheque");
 
   if(isCreditCard && modo === 'Dividido'){
     var maq = (appData.maquininhas||[]).find(function(m){return m.id === maqId;});
@@ -827,6 +828,35 @@ function saveVenda(id){
   }else{
     obj.id=nextId(appData.vendas);
     appData.vendas.push(obj);
+
+    // Automação: Enviar para Boletos ou Cheques
+    if(isBoleto && bModo === 'Prazo'){
+      if(!appData.boletos) appData.boletos = [];
+      var venc = new Date(obj.data + 'T00:00:00');
+      venc.setDate(venc.getDate() + (obj.boletoDias || 0));
+      appData.boletos.push({
+        id: nextId(appData.boletos),
+        descricao: 'Venda ' + (obj.produto || '-') + ' - ' + (obj.cliente || '-'),
+        valor: obj.valorLiquido,
+        vencimento: venc.toISOString().split('T')[0],
+        situacao: 'Pendente',
+        vendaId: obj.id,
+        obs: 'Gerado automaticamente da venda'
+      });
+    }
+    if(isCheque){
+      if(!appData.cheques) appData.cheques = [];
+      appData.cheques.push({
+        id: nextId(appData.cheques),
+        numero: '',
+        emitente: obj.cliente || '-',
+        valor: obj.valorLiquido,
+        bomPara: obj.data,
+        situacao: 'Em mãos',
+        vendaId: obj.id,
+        obs: 'Gerado automaticamente da venda'
+      });
+    }
   }
   saveData();closeCadastroModal();renderVendasPage();showToast(id?'Venda atualizada!':'Venda cadastrada!','success');
 }
