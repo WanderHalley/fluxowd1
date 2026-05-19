@@ -678,7 +678,19 @@ function deleteCompra(id){if(!confirm('Excluir compra?'))return;appData.compras=
 function onComprasSearch(q){comprasSearchQuery=q.toLowerCase();applyComprasFilters();}
 function onComprasFilterSit(v){comprasFilterSit=v;applyComprasFilters();}
 function onComprasFilterPgto(v){comprasFilterPgto=v;applyComprasFilters();}
-function applyComprasFilters(){var list=appData.compras||[];if(comprasSearchQuery)list=list.filter(function(c){return(c.produto||'').toLowerCase().includes(comprasSearchQuery)||(c.fornecedor||'').toLowerCase().includes(comprasSearchQuery);});if(comprasFilterSit)list=list.filter(function(c){return c.situacao===comprasFilterSit;});if(comprasFilterPgto)list=list.filter(function(c){return c.formaPagamento===comprasFilterPgto;});renderComprasTable(list);renderComprasResultPanel(list);}
+function applyComprasFilters(){
+  var list=appData.compras||[];
+  if(comprasSearchQuery)list=list.filter(function(c){return(c.produto||'').toLowerCase().includes(comprasSearchQuery)||(c.fornecedor||'').toLowerCase().includes(comprasSearchQuery);});
+  if(comprasFilterSit)list=list.filter(function(c){return c.situacao===comprasFilterSit;});
+  if(comprasFilterPgto)list=list.filter(function(c){return c.formaPagamento===comprasFilterPgto;});
+  
+  list.sort(function(a, b) {
+    return (a.produto || '').localeCompare(b.produto || '');
+  });
+
+  renderComprasTable(list);
+  renderComprasResultPanel(list);
+}
 function renderComprasResultPanel(list){var panel=document.getElementById('comprasResultPanel');if(!panel)return;var total=list.reduce(function(s,c){return s+((c.quantidade||1)*(c.valorUnit||0));},0);var pago=list.filter(function(c){return c.situacao==='Pago';}).reduce(function(s,c){return s+((c.quantidade||1)*(c.valorUnit||0));},0);var devendo=list.filter(function(c){return c.situacao==='Devendo';}).reduce(function(s,c){return s+((c.quantidade||1)*(c.valorUnit||0));},0);panel.innerHTML='<div class="card"><div class="card-header"><span>Total Filtrado</span></div><div class="card-value">'+formatCurrency(total)+'</div><div class="card-sub">'+list.length+' compra(s)</div></div><div class="card"><div class="card-header"><span>Pago</span></div><div class="card-value text-success">'+formatCurrency(pago)+'</div></div><div class="card"><div class="card-header"><span>Devendo</span></div><div class="card-value text-danger">'+formatCurrency(devendo)+'</div></div>';}
 
 // ══════════════════════════════════════════════════════════════
@@ -899,7 +911,18 @@ var parcialInfo = ''; if(v.situacao === 'Parcial'){ parcialInfo = '<div class="d
 function deleteVenda(id){if(!confirm('Excluir venda?'))return;appData.vendas=(appData.vendas||[]).filter(function(v){return v.id!==id;});saveData();renderVendasPage();showToast('Venda excluída!','success');}
 function onVendasSearch(q){vendasSearchQuery=q.toLowerCase();applyVendasFilters();}
 function onVendasFilterSit(v){vendasFilterSit=v;applyVendasFilters();}
-function applyVendasFilters(){var list=appData.vendas||[];if(vendasSearchQuery)list=list.filter(function(v){return(v.produto||'').toLowerCase().includes(vendasSearchQuery)||(v.cliente||'').toLowerCase().includes(vendasSearchQuery);});if(vendasFilterSit)list=list.filter(function(v){return v.situacao===vendasFilterSit;});renderVendasTable(list);renderVendasResultPanel(list);}
+function applyVendasFilters(){
+  var list=appData.vendas||[];
+  if(vendasSearchQuery)list=list.filter(function(v){return(v.produto||'').toLowerCase().includes(vendasSearchQuery)||(v.cliente||'').toLowerCase().includes(vendasSearchQuery);});
+  if(vendasFilterSit)list=list.filter(function(v){return v.situacao===vendasFilterSit;});
+  
+  list.sort(function(a, b) {
+    return (a.produto || '').localeCompare(b.produto || '');
+  });
+
+  renderVendasTable(list);
+  renderVendasResultPanel(list);
+}
 function renderVendasResultPanel(list){var panel=document.getElementById('vendasResultPanel');if(!panel)return;var total=list.reduce(function(s,v){return s+((v.quantidade||1)*(v.valorUnit||0));},0);var liquido=list.reduce(function(s,v){return s+(v.valorLiquido !== undefined ? v.valorLiquido : (v.quantidade||1)*(v.valorUnit||0));},0);var pago=list.reduce(function(s,v){
   if(v.situacao === 'Pago') return s + (v.valorLiquido !== undefined ? v.valorLiquido : (v.quantidade||1)*(v.valorUnit||0));
   if(v.situacao === 'Parcial') return s + (v.valorPago || 0);
