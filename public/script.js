@@ -275,8 +275,13 @@ function closeViewModal(){document.getElementById('viewModal').style.display='no
 // ── SIDEBAR ──
 function toggleSidebar(){
   var sb = document.getElementById('sidebar');
-  sb.classList.toggle('collapsed'); 
-  sb.classList.toggle('open');
+  if(window.innerWidth <= 768){
+    sb.classList.toggle('open');
+    sb.classList.remove('collapsed');
+  } else {
+    sb.classList.toggle('collapsed');
+    sb.classList.remove('open');
+  }
   syncExpandBtn();
 }
 function collapseSidebar(){
