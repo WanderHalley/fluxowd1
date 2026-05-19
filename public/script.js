@@ -130,6 +130,10 @@ function getDefaultData(){
     boletos:[],cheques:[],prestacoes:[],projetos:[],
     pagClientes:[],garantias:[],
     notasEntrada:[],notasSaida:[],receitasMei:[],
+    maquininhas:[
+      {id:1, nome:"InfinitPay Link", taxas:[0, 2.5, 4.4, 5.5, 6.5, 7.5, 8.5, 9.5, 10.5, 11.5, 12.5, 13.5, 14.5]},
+      {id:2, nome:"InfinitPay Presencial", taxas:[0, 1.4, 3.2, 4.2, 5.2, 6.2, 7.2, 8.2, 9.2, 10.2, 11.2, 12.2, 13.2]}
+    ],
     fluxoCaixa:{}
   };
 }
@@ -260,6 +264,7 @@ function ensureDefaults(){
   if(!appData.empresa.empreendedor) appData.empresa.empreendedor=def.empresa.empreendedor;
   if(!appData.empresa.cidade) appData.empresa.cidade=def.empresa.cidade;
   if(!appData.categoriasProdutos) appData.categoriasProdutos=def.categoriasProdutos;
+  if(!appData.maquininhas) appData.maquininhas=def.maquininhas;
 }
 
 // ── UI HELPERS ──
@@ -640,30 +645,136 @@ function renderComprasResultPanel(list){var panel=document.getElementById('compr
 // ── VENDAS ──
 // ══════════════════════════════════════════════════════════════
 function renderVendasPage(){var pg=document.getElementById('page-vendas');if(!pg)return;var sitOpts=(appData.situacaoVenda||[]).map(function(s){return'<option value="'+s+'">'+s+'</option>';}).join('');pg.innerHTML='<div class="page-header"><h2>💰 Vendas</h2><div style="display:flex;gap:8px"><button class="btn btn-primary" onclick="openVendaModal()">+ Nova Venda</button><button class="btn btn-outline" id="btnVendasEdit" onclick="toggleVendasEditMode()">'+(vendasEditMode?'✅ Finalizar Edição':'✏️ Editar Todos')+'</button><button class="btn btn-danger" onclick="deleteAllVendas()">🗑️ Excluir Todos</button></div></div><div class="dashboard-grid" id="vendasResultPanel"></div><div class="filter-bar"><input type="text" class="form-control" style="max-width:250px" placeholder="Buscar venda..." oninput="onVendasSearch(this.value)"><select class="form-control" style="max-width:160px" onchange="onVendasFilterSit(this.value)"><option value="">Situação (todas)</option>'+sitOpts+'</select></div><div class="table-responsive"><table class="table"><thead><tr><th>Data</th><th>Produto</th><th>Cliente</th><th>Qtd</th><th>V.Unit</th><th>Total</th><th>F.Pgto</th><th>Situação</th><th>Ações</th></tr></thead><tbody id="vendasBody"></tbody></table></div>';vendasSearchQuery='';vendasFilterSit='';applyVendasFilters();}
-function renderVendasTable(vendas){var tbody=document.getElementById('vendasBody');if(!tbody)return;if(vendas.length===0){tbody.innerHTML='<tr><td colspan="9" style="text-align:center;padding:40px;color:var(--text-muted)">Nenhuma venda encontrada</td></tr>';return;}var sitOpts=(appData.situacaoVenda||[]);tbody.innerHTML=vendas.map(function(v){var total=(v.quantidade||1)*(v.valorUnit||0);var sitSelect='<select class="form-control" style="min-width:100px;padding:4px 6px;font-size:12px" onchange="changeVendaField('+v.id+',\'situacao\',this.value)">'+sitOpts.map(function(s){return'<option value="'+s+'"'+(v.situacao===s?' selected':'')+'>'+s+'</option>';}).join('')+'</select>';var acoes=vendasEditMode?'<button class="btn btn-sm btn-outline" onclick="viewVenda('+v.id+')">👁️</button> <button class="btn btn-sm btn-primary" onclick="editVenda('+v.id+')">✏️</button> <button class="btn btn-sm btn-danger" onclick="deleteVenda('+v.id+')">🗑️</button>':'<button class="btn btn-sm btn-outline" onclick="viewVenda('+v.id+')">👁️</button>';return'<tr><td>'+formatDate(v.data)+'</td><td>'+(v.produto||'-')+'</td><td>'+(v.cliente||'-')+'</td><td>'+(v.quantidade||1)+'</td><td>'+formatCurrency(v.valorUnit)+'</td><td>'+formatCurrency(total)+'</td><td>'+(v.formaPagamento||'-')+'</td><td>'+sitSelect+'</td><td>'+acoes+'</td></tr>';}).join('');}
+function renderVendasTable(vendas){var tbody=document.getElementById('vendasBody');if(!tbody)return;if(vendas.length===0){tbody.innerHTML='<tr><td colspan="9" style="text-align:center;padding:40px;color:var(--text-muted)">Nenhuma venda encontrada</td></tr>';return;}var sitOpts=(appData.situacaoVenda||[]);tbody.innerHTML=vendas.map(function(v){var total=(v.quantidade||1)*(v.valorUnit||0);var liq = v.valorLiquido !== undefined ? v.valorLiquido : total;var totalDisplay = formatCurrency(liq); if(liq < total){ totalDisplay = '<span title="Bruto: '+formatCurrency(total)+'">'+formatCurrency(liq)+'</span> <small style="display:block; font-size:9px; color:var(--text-muted)">Taxa: '+v.taxa+'%</small>'; } var sitSelect='<select class="form-control" style="min-width:100px;padding:4px 6px;font-size:12px" onchange="changeVendaField('+v.id+',\'situacao\',this.value)">'+sitOpts.map(function(s){return'<option value="'+s+'"'+(v.situacao===s?' selected':'')+'>'+s+'</option>';}).join('')+'</select>';var acoes=vendasEditMode?'<button class="btn btn-sm btn-outline" onclick="viewVenda('+v.id+')">👁️</button> <button class="btn btn-sm btn-primary" onclick="editVenda('+v.id+')">✏️</button> <button class="btn btn-sm btn-danger" onclick="deleteVenda('+v.id+')">🗑️</button>':'<button class="btn btn-sm btn-outline" onclick="viewVenda('+v.id+')">👁️</button>';return'<tr><td>'+formatDate(v.data)+'</td><td>'+(v.produto||'-')+'</td><td>'+(v.cliente||'-')+'</td><td>'+(v.quantidade||1)+'</td><td>'+formatCurrency(v.valorUnit)+'</td><td>'+totalDisplay+'</td><td>'+(v.formaPagamento||'-')+'</td><td>'+sitSelect+'</td><td>'+acoes+'</td></tr>';}).join('');}
 function changeVendaField(id,field,value){var v=(appData.vendas||[]).find(function(x){return x.id===id;});if(v){v[field]=value;saveData();applyVendasFilters();}}
 function onVendaProductChange(nome){
   var p = (appData.produtos||[]).find(function(x){return x.nome === nome;});
   if(p){
     var valInput = document.getElementById('vnValor');
     if(valInput) valInput.value = p.valorVenda || 0;
+    updateVendaCalc();
+  }
+}
+function updateVendaCalc(){
+  var pgto = document.getElementById('vnPgto') ? document.getElementById('vnPgto').value : '';
+  var modo = document.getElementById('vnModo') ? document.getElementById('vnModo').value : 'À Vista';
+  var maqConfig = document.getElementById('vnMaqArea');
+  var calcArea = document.getElementById('vnCalcArea');
+  
+  var isCreditCard = pgto === 'Cartão de Crédito' || pgto.toLowerCase().includes('cartão de crédito') || pgto.toLowerCase().includes('cartao de credito');
+  
+  if(isCreditCard){
+    if(maqConfig) maqConfig.style.display = 'block';
+  } else {
+    if(maqConfig) maqConfig.style.display = 'none';
+  }
+
+  var qtd = parseFloat(document.getElementById('vnQtd').value) || 0;
+  var val = parseFloat(document.getElementById('vnValor').value) || 0;
+  var totalBruto = qtd * val;
+  
+  var liqVal = totalBruto;
+  var taxaAplicada = 0;
+
+  if(isCreditCard && modo === 'Dividido'){
+    var maqIdInput = document.getElementById('vnMaq');
+    var parcInput = document.getElementById('vnParcelas');
+    if(maqIdInput && parcInput){
+      var maqId = parseInt(maqIdInput.value);
+      var parcelas = parseInt(parcInput.value);
+      var maq = (appData.maquininhas||[]).find(function(m){return m.id === maqId;});
+      if(maq && maq.taxas && maq.taxas[parcelas] !== undefined){
+        taxaAplicada = maq.taxas[parcelas];
+        liqVal = totalBruto * (1 - (taxaAplicada / 100));
+      }
+    }
+  }
+
+  if(calcArea){
+    calcArea.innerHTML = '<div style="background:var(--bg-tertiary); padding:10px; border-radius:8px; margin-top:10px; border:1px solid var(--border-color); margin-bottom:15px">' +
+      '<div style="display:flex; justify-content:space-between"><span>Total Bruto:</span><strong>'+formatCurrency(totalBruto)+'</strong></div>' +
+      (taxaAplicada > 0 ? '<div style="display:flex; justify-content:space-between"><span>Taxa ('+taxaAplicada+'%):</span><span class="text-danger">- '+formatCurrency(totalBruto - liqVal)+'</span></div>' : '') +
+      '<div style="display:flex; justify-content:space-between; margin-top:4px; font-size:1.1em"><span>Recebimento Líquido:</span><strong class="text-success">'+formatCurrency(liqVal)+'</strong></div>' +
+    '</div>';
   }
 }
 function openVendaModal(venda){var isEdit=!!venda;var cliOpts=(appData.clientes||[]).map(function(c){return'<option value="'+c.nome+'"'+(venda&&venda.cliente===c.nome?' selected':'')+'>'+c.nome+'</option>';}).join('');var pgtoOpts=(appData.formasPagamentoVendas||[]).map(function(f){return'<option value="'+f+'"'+(venda&&venda.formaPagamento===f?' selected':'')+'>'+f+'</option>';}).join('');var sitOpts=(appData.situacaoVenda||[]).map(function(s){return'<option value="'+s+'"'+(venda&&venda.situacao===s?' selected':'')+'>'+s+'</option>';}).join('');var entregaOpts=(appData.situacaoEntrega||[]).map(function(s){return'<option value="'+s+'"'+(venda&&venda.entrega===s?' selected':'')+'>'+s+'</option>';}).join('');var vendedorOpts=(appData.vendedores||[]).map(function(v2){return'<option value="'+v2+'"'+(venda&&venda.vendedor===v2?' selected':'')+'>'+v2+'</option>';}).join('');var prodOpts=(appData.produtos||[]).map(function(p){return'<option value="'+p.nome+'"'+(venda&&venda.produto===p.nome?' selected':'')+'>'+p.nome+'</option>';}).join('');
 if(venda && venda.produto && !(appData.produtos||[]).some(function(p){return p.nome===venda.produto;})){
   prodOpts='<option value="'+venda.produto+'" selected>'+venda.produto+' (Manual)</option>'+prodOpts;
 }
-document.getElementById('cadastroModalTitle').textContent=isEdit?'Editar Venda':'Nova Venda';document.getElementById('cadastroModalBody').innerHTML='<div class="form-row"><div class="form-group"><label>Data</label><input type="date" class="form-control" id="vnData" value="'+(venda?venda.data:todayStr())+'"></div><div class="form-group"><label>Vendedor</label><select class="form-control" id="vnVendedor"><option value="">Selecione...</option>'+vendedorOpts+'</select></div></div><div class="form-group"><label>Produto *</label><select class="form-control" id="vnProd" onchange="onVendaProductChange(this.value)"><option value="">Selecione...</option>'+prodOpts+'</select></div><div class="form-row"><div class="form-group"><label>Qtd</label><input type="number" class="form-control" id="vnQtd" value="'+(venda?venda.quantidade:1)+'" min="1"></div><div class="form-group"><label>Valor Unit.</label><input type="number" class="form-control" id="vnValor" value="'+(venda?venda.valorUnit:'')+'" step="0.01"></div></div><div class="form-row"><div class="form-group"><label>Cliente</label><select class="form-control" id="vnCli"><option value="">Selecione...</option>'+cliOpts+'</select></div><div class="form-group"><label>Forma Pgto</label><select class="form-control" id="vnPgto"><option value="">Selecione...</option>'+pgtoOpts+'</select></div></div><div class="form-row"><div class="form-group"><label>Situação</label><select class="form-control" id="vnSit">'+sitOpts+'</select></div><div class="form-group"><label>Entrega</label><select class="form-control" id="vnEntrega">'+entregaOpts+'</select></div></div><div class="form-group"><label>Obs</label><textarea class="form-control" id="vnObs" rows="2">'+(venda?venda.obs||'':'')+'</textarea></div>';document.getElementById('cadastroModalFooter').innerHTML='<button class="btn btn-secondary" onclick="closeCadastroModal()">Cancelar</button><button class="btn btn-primary" onclick="saveVenda('+(isEdit?venda.id:'null')+')">Salvar</button>';openCadastroModal();}
-function saveVenda(id){var obj={data:document.getElementById('vnData').value,produto:document.getElementById('vnProd').value.trim(),quantidade:parseFloat(document.getElementById('vnQtd').value)||1,valorUnit:parseFloat(document.getElementById('vnValor').value)||0,cliente:document.getElementById('vnCli').value,formaPagamento:document.getElementById('vnPgto').value,situacao:document.getElementById('vnSit').value,entrega:document.getElementById('vnEntrega').value,vendedor:document.getElementById('vnVendedor').value,obs:document.getElementById('vnObs').value};if(!obj.produto){showToast('Informe o produto','error');return;}if(!appData.vendas)appData.vendas=[];if(id){var idx=appData.vendas.findIndex(function(v){return v.id===id;});if(idx>-1){obj.id=id;appData.vendas[idx]=obj;}}else{obj.id=nextId(appData.vendas);appData.vendas.push(obj);}saveData();closeCadastroModal();renderVendasPage();showToast(id?'Venda atualizada!':'Venda cadastrada!','success');}
+var maqOpts=(appData.maquininhas||[]).map(function(m){return'<option value="'+m.id+'"'+(venda&&venda.maquininhaId===m.id?' selected':'')+'>'+m.nome+'</option>';}).join('');
+var parcOpts=''; for(var i=1;i<=12;i++){ parcOpts+='<option value="'+i+'"'+(venda&&venda.parcelas===i?' selected':'')+'>'+i+'x</option>'; }
+
+document.getElementById('cadastroModalTitle').textContent=isEdit?'Editar Venda':'Nova Venda';document.getElementById('cadastroModalBody').innerHTML='<div class="form-row"><div class="form-group"><label>Data</label><input type="date" class="form-control" id="vnData" value="'+(venda?venda.data:todayStr())+'"></div><div class="form-group"><label>Vendedor</label><select class="form-control" id="vnVendedor"><option value="">Selecione...</option>'+vendedorOpts+'</select></div></div><div class="form-group"><label>Produto *</label><select class="form-control" id="vnProd" onchange="onVendaProductChange(this.value)"><option value="">Selecione...</option>'+prodOpts+'</select></div><div class="form-row"><div class="form-group"><label>Qtd</label><input type="number" class="form-control" id="vnQtd" value="'+(venda?venda.quantidade:1)+'" min="1" oninput="updateVendaCalc()"></div><div class="form-group"><label>Valor Unit.</label><input type="number" class="form-control" id="vnValor" value="'+(venda?venda.valorUnit:'')+'" step="0.01" oninput="updateVendaCalc()"></div></div><div class="form-row"><div class="form-group"><label>Cliente</label><select class="form-control" id="vnCli"><option value="">Selecione...</option>'+cliOpts+'</select></div><div class="form-group"><label>Forma Pgto</label><select class="form-control" id="vnPgto" onchange="updateVendaCalc()"><option value="">Selecione...</option>'+pgtoOpts+'</select></div></div>' +
+'<div id="vnMaqArea" style="display:none; background:rgba(255,255,255,0.03); padding:10px; border-radius:8px; margin-bottom:15px">' +
+  '<div class="form-row">' +
+    '<div class="form-group"><label>Modo</label><select class="form-control" id="vnModo" onchange="updateVendaCalc()"><option value="À Vista" '+(venda&&venda.modo==='À Vista'?'selected':'')+'>À Vista</option><option value="Dividido" '+(venda&&venda.modo==='Dividido'?'selected':'')+'>Dividido</option></select></div>' +
+    '<div class="form-group"><label>Maquininha</label><select class="form-control" id="vnMaq" onchange="updateVendaCalc()">'+maqOpts+'</select></div>' +
+    '<div class="form-group"><label>Parcelas</label><select class="form-control" id="vnParcelas" onchange="updateVendaCalc()">'+parcOpts+'</select></div>' +
+  '</div>' +
+'</div>' +
+'<div id="vnCalcArea"></div>' +
+'<div class="form-row"><div class="form-group"><label>Situação</label><select class="form-control" id="vnSit">'+sitOpts+'</select></div><div class="form-group"><label>Entrega</label><select class="form-control" id="vnEntrega">'+entregaOpts+'</select></div></div><div class="form-group"><label>Obs</label><textarea class="form-control" id="vnObs" rows="2">'+(venda?venda.obs||'':'')+'</textarea></div>';document.getElementById('cadastroModalFooter').innerHTML='<button class="btn btn-secondary" onclick="closeCadastroModal()">Cancelar</button><button class="btn btn-primary" onclick="saveVenda('+(isEdit?venda.id:'null')+')">Salvar</button>';openCadastroModal(); updateVendaCalc();}
+function saveVenda(id){
+  var qtd = parseFloat(document.getElementById('vnQtd').value)||1;
+  var val = parseFloat(document.getElementById('vnValor').value)||0;
+  var pgto = document.getElementById('vnPgto').value;
+  var modo = document.getElementById('vnModo').value;
+  var maqId = parseInt(document.getElementById('vnMaq').value);
+  var parcelas = parseInt(document.getElementById('vnParcelas').value);
+  
+  var totalBruto = qtd * val;
+  var liqVal = totalBruto;
+  var taxa = 0;
+
+  var isCreditCard = pgto === 'Cartão de Crédito' || pgto.toLowerCase().includes('cartão de crédito') || pgto.toLowerCase().includes('cartao de credito');
+
+  if(isCreditCard && modo === 'Dividido'){
+    var maq = (appData.maquininhas||[]).find(function(m){return m.id === maqId;});
+    if(maq && maq.taxas && maq.taxas[parcelas] !== undefined){
+      taxa = maq.taxas[parcelas];
+      liqVal = totalBruto * (1 - (taxa / 100));
+    }
+  }
+
+  var obj={
+    data:document.getElementById('vnData').value,
+    produto:document.getElementById('vnProd').value.trim(),
+    quantidade:qtd,
+    valorUnit:val,
+    totalBruto: totalBruto,
+    valorLiquido: liqVal,
+    taxa: taxa,
+    modo: modo,
+    maquininhaId: isCreditCard ? maqId : null,
+    parcelas: isCreditCard ? parcelas : null,
+    cliente:document.getElementById('vnCli').value,
+    formaPagamento:pgto,
+    situacao:document.getElementById('vnSit').value,
+    entrega:document.getElementById('vnEntrega').value,
+    vendedor:document.getElementById('vnVendedor').value,
+    obs:document.getElementById('vnObs').value
+  };
+  if(!obj.produto){showToast('Informe o produto','error');return;}
+  if(!appData.vendas)appData.vendas=[];
+  if(id){
+    var idx=appData.vendas.findIndex(function(v){return v.id===id;});
+    if(idx>-1){obj.id=id;appData.vendas[idx]=obj;}
+  }else{
+    obj.id=nextId(appData.vendas);
+    appData.vendas.push(obj);
+  }
+  saveData();closeCadastroModal();renderVendasPage();showToast(id?'Venda atualizada!':'Venda cadastrada!','success');
+}
 function editVenda(id){var v=(appData.vendas||[]).find(function(x){return x.id===id;});if(v)openVendaModal(v);}
-function viewVenda(id){var v=(appData.vendas||[]).find(function(x){return x.id===id;});if(!v)return;var total=(v.quantidade||1)*(v.valorUnit||0);document.getElementById('viewModalTitle').textContent='Detalhes da Venda';document.getElementById('viewModalBody').innerHTML='<div class="detail-grid"><div class="detail-item"><span class="detail-label">Data</span>'+formatDate(v.data)+'</div><div class="detail-item"><span class="detail-label">Produto</span>'+v.produto+'</div><div class="detail-item"><span class="detail-label">Qtd</span>'+v.quantidade+'</div><div class="detail-item"><span class="detail-label">V.Unit</span>'+formatCurrency(v.valorUnit)+'</div><div class="detail-item"><span class="detail-label">Total</span>'+formatCurrency(total)+'</div><div class="detail-item"><span class="detail-label">Cliente</span>'+(v.cliente||'-')+'</div><div class="detail-item"><span class="detail-label">Pgto</span>'+(v.formaPagamento||'-')+'</div><div class="detail-item"><span class="detail-label">Situação</span>'+situacaoBadge(v.situacao)+'</div><div class="detail-item"><span class="detail-label">Entrega</span>'+situacaoBadge(v.entrega)+'</div><div class="detail-item"><span class="detail-label">Vendedor</span>'+(v.vendedor||'-')+'</div></div>'+(v.obs?'<div style="margin-top:12px;padding:10px;background:var(--bg-tertiary);border-radius:var(--radius-sm)"><strong>Obs:</strong> '+v.obs+'</div>':'');openViewModal();}
+function viewVenda(id){var v=(appData.vendas||[]).find(function(x){return x.id===id;});if(!v)return;var total=(v.quantidade||1)*(v.valorUnit||0);var liq = v.valorLiquido !== undefined ? v.valorLiquido : total;var calcInfo = ''; if(v.taxa > 0){ calcInfo = '<div class="detail-item"><span class="detail-label">Máquina</span>'+(appData.maquininhas.find(m=>m.id===v.maquininhaId)?.nome||'-')+' ('+v.parcelas+'x)</div>' + '<div class="detail-item"><span class="detail-label">Taxa</span>'+v.taxa+'% (- '+formatCurrency(total - liq)+')</div>'; } document.getElementById('viewModalTitle').textContent='Detalhes da Venda';document.getElementById('viewModalBody').innerHTML='<div class="detail-grid"><div class="detail-item"><span class="detail-label">Data</span>'+formatDate(v.data)+'</div><div class="detail-item"><span class="detail-label">Produto</span>'+v.produto+'</div><div class="detail-item"><span class="detail-label">Qtd</span>'+v.quantidade+'</div><div class="detail-item"><span class="detail-label">V.Unit</span>'+formatCurrency(v.valorUnit)+'</div><div class="detail-item"><span class="detail-label">Total Bruto</span>'+formatCurrency(total)+'</div>'+calcInfo+'<div class="detail-item"><span class="detail-label">Total Líquido</span><strong class="text-success">'+formatCurrency(liq)+'</strong></div><div class="detail-item"><span class="detail-label">Cliente</span>'+(v.cliente||'-')+'</div><div class="detail-item"><span class="detail-label">Pgto</span>'+(v.formaPagamento||'-')+'</div><div class="detail-item"><span class="detail-label">Situação</span>'+situacaoBadge(v.situacao)+'</div><div class="detail-item"><span class="detail-label">Entrega</span>'+situacaoBadge(v.entrega)+'</div><div class="detail-item"><span class="detail-label">Vendedor</span>'+(v.vendedor||'-')+'</div></div>'+(v.obs?'<div style="margin-top:12px;padding:10px;background:var(--bg-tertiary);border-radius:var(--radius-sm)"><strong>Obs:</strong> '+v.obs+'</div>':'');openViewModal();}
 function deleteVenda(id){if(!confirm('Excluir venda?'))return;appData.vendas=(appData.vendas||[]).filter(function(v){return v.id!==id;});saveData();renderVendasPage();showToast('Venda excluída!','success');}
 function toggleVendasEditMode(){vendasEditMode=!vendasEditMode;var btn=document.getElementById('btnVendasEdit');if(btn)btn.textContent=vendasEditMode?'✅ Finalizar Edição':'✏️ Editar Todos';applyVendasFilters();}
 function deleteAllVendas(){if(!confirm('Excluir TODAS as vendas?'))return;appData.vendas=[];saveData();renderVendasPage();showToast('Todas excluídas!','success');}
 function onVendasSearch(q){vendasSearchQuery=q.toLowerCase();applyVendasFilters();}
 function onVendasFilterSit(v){vendasFilterSit=v;applyVendasFilters();}
 function applyVendasFilters(){var list=appData.vendas||[];if(vendasSearchQuery)list=list.filter(function(v){return(v.produto||'').toLowerCase().includes(vendasSearchQuery)||(v.cliente||'').toLowerCase().includes(vendasSearchQuery);});if(vendasFilterSit)list=list.filter(function(v){return v.situacao===vendasFilterSit;});renderVendasTable(list);renderVendasResultPanel(list);}
-function renderVendasResultPanel(list){var panel=document.getElementById('vendasResultPanel');if(!panel)return;var total=list.reduce(function(s,v){return s+((v.quantidade||1)*(v.valorUnit||0));},0);var pago=list.filter(function(v){return v.situacao==='Pago';}).reduce(function(s,v){return s+((v.quantidade||1)*(v.valorUnit||0));},0);var devendo=list.filter(function(v){return v.situacao==='Devendo';}).reduce(function(s,v){return s+((v.quantidade||1)*(v.valorUnit||0));},0);panel.innerHTML='<div class="card"><div class="card-header"><span>Total Filtrado</span></div><div class="card-value">'+formatCurrency(total)+'</div><div class="card-sub">'+list.length+' venda(s)</div></div><div class="card"><div class="card-header"><span>Pago</span></div><div class="card-value text-success">'+formatCurrency(pago)+'</div></div><div class="card"><div class="card-header"><span>Devendo</span></div><div class="card-value text-danger">'+formatCurrency(devendo)+'</div></div>';}
+function renderVendasResultPanel(list){var panel=document.getElementById('vendasResultPanel');if(!panel)return;var total=list.reduce(function(s,v){return s+((v.quantidade||1)*(v.valorUnit||0));},0);var liquido=list.reduce(function(s,v){return s+(v.valorLiquido !== undefined ? v.valorLiquido : (v.quantidade||1)*(v.valorUnit||0));},0);var pago=list.filter(function(v){return v.situacao==='Pago';}).reduce(function(s,v){return s+(v.valorLiquido !== undefined ? v.valorLiquido : (v.quantidade||1)*(v.valorUnit||0));},0);var devendo=list.filter(function(v){return v.situacao==='Devendo';}).reduce(function(s,v){return s+((v.quantidade||1)*(v.valorUnit||0));},0);panel.innerHTML='<div class="card"><div class="card-header"><span>Total Bruto</span></div><div class="card-value">'+formatCurrency(total)+'</div><div class="card-sub">'+list.length+' venda(s)</div></div><div class="card card-accent"><div class="card-header"><span>Total Líquido (Real)</span></div><div class="card-value text-success">'+formatCurrency(liquido)+'</div></div><div class="card"><div class="card-header"><span>Líquido Pago</span></div><div class="card-value text-success">'+formatCurrency(pago)+'</div></div><div class="card"><div class="card-header"><span>Bruto Devendo</span></div><div class="card-value text-danger">'+formatCurrency(devendo)+'</div></div>';}
 
 // ══════════════════════════════════════════════════════════════
 // ── ESTOQUE ──
@@ -1332,7 +1443,7 @@ function renderConfiguracoesPage(){
 
   pg.innerHTML=
     '<div class="page-header"><h2>⚙️ Configurações</h2></div>'+
-    empresaHtml+vendedoresHtml+catProdHtml+formasPgtoHtml+formasPgtoVendasHtml+tipoUnidadeHtml+tipoVendaHtml+
+    empresaHtml+vendedoresHtml+renderMaquininhasConfig()+catProdHtml+formasPgtoHtml+formasPgtoVendasHtml+tipoUnidadeHtml+tipoVendaHtml+
     sitCompraHtml+sitVendaHtml+sitEntregaHtml+sitChequeHtml+sitGarantiaHtml+sitBoletoHtml+categoriasHtml;
 
   setTimeout(function(){initCfgDragDrop();},100);
@@ -1409,6 +1520,68 @@ function removeCfgCat(idx) {
     saveData();
     renderConfiguracoesPage();
   }
+}
+
+// ── MAQUININHAS ACTIONS ──
+function renderMaquininhasConfig() {
+  var html = '';
+  (appData.maquininhas || []).forEach(function(m, i) {
+    var feeInputs = '';
+    for (var j = 1; j <= 12; j++) {
+      var val = (m.taxas && m.taxas[j] !== undefined) ? m.taxas[j] : 0;
+      feeInputs += '<div class="form-group" style="min-width:60px"><label style="font-size:10px">'+j+'x (%)</label><input type="number" class="form-control form-control-sm" style="padding:2px; font-size:11px" value="'+val+'" step="0.01" onchange="updateMaquininhaTaxa('+i+','+j+',this.value)"></div>';
+    }
+    html += '<div class="cfg-card" style="border:1px solid var(--border-color); padding:12px; border-radius:8px; margin-bottom:12px; background:rgba(255,255,255,0.02)">' +
+      '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px">' +
+        '<input class="form-control" style="font-weight:bold; border:none; background:transparent; font-size:16px; padding:0" value="'+m.nome+'" onchange="updateMaquininhaNome('+i+',this.value)">' +
+        '<button class="btn btn-sm btn-danger" style="padding:2px 6px" onclick="removeMaquininha('+i+')">✕</button>' +
+      '</div>' +
+      '<div style="display:flex; gap:6px; flex-wrap:wrap">' + feeInputs + '</div>' +
+    '</div>';
+  });
+  return '<div class="cfg-section">' +
+    '<div class="cfg-section-header"><span class="cfg-section-icon">🏦</span><h3>Taxas de Máquinas (Até 12x)</h3></div>' +
+    '<div class="cfg-section-body">' +
+      '<div id="maquininhasList">' + (html || '<p style="color:var(--text-muted)">Nenhuma máquina cadastrada.</p>') + '</div>' +
+      '<div class="cfg-add-row" style="margin-top:12px">' +
+        '<input class="form-control" id="cfgAdd_maqNome" placeholder="Ex: Mercado Pago, InfinitePay Link..."> ' +
+        '<button class="btn btn-primary btn-sm" onclick="addMaquininha()">+ Adicionar Máquina</button>' +
+      '</div>' +
+    '</div>' +
+  '</div>';
+}
+
+function addMaquininha() {
+  var name = document.getElementById('cfgAdd_maqNome').value.trim();
+  if(!name) { showToast('Informe o nome da máquina','error'); return; }
+  if(!appData.maquininhas) appData.maquininhas = [];
+  appData.maquininhas.push({
+    id: Date.now(),
+    nome: name,
+    taxas: [0,0,0,0,0,0,0,0,0,0,0,0,0] // 0 a 12
+  });
+  saveData();
+  renderConfiguracoesPage();
+  showToast('Máquina adicionada!','success');
+}
+function updateMaquininhaNome(idx, val) {
+  if(appData.maquininhas && appData.maquininhas[idx]) {
+    appData.maquininhas[idx].nome = val;
+    saveData();
+  }
+}
+function updateMaquininhaTaxa(maqIdx, parcelas, val) {
+  if(appData.maquininhas && appData.maquininhas[maqIdx]) {
+    if(!appData.maquininhas[maqIdx].taxas) appData.maquininhas[maqIdx].taxas = new Array(13).fill(0);
+    appData.maquininhas[maqIdx].taxas[parcelas] = parseFloat(val) || 0;
+    saveData();
+  }
+}
+function removeMaquininha(idx) {
+  if(!confirm('Remover esta máquina e suas taxas?')) return;
+  appData.maquininhas.splice(idx, 1);
+  saveData();
+  renderConfiguracoesPage();
 }
 
 function initCfgDragDrop() {
