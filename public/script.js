@@ -690,6 +690,16 @@ function updateVendaCalc(){
   if(modoArea) modoArea.style.display = isCreditCard ? 'block' : 'none';
   if(maqArea) maqArea.style.display = (isCreditCard && modo === 'Dividido') ? 'block' : 'none';
 
+  var isBoleto = cleanPgto.includes("boleto");
+  var boletoArea = document.getElementById('vnBoletoArea');
+  if(boletoArea){
+    boletoArea.style.display = isBoleto ? 'block' : 'none';
+    if(isBoleto){
+      var bModo = document.getElementById('vnBoletoModo').value;
+      document.getElementById('vnBoletoDiasArea').style.display = (bModo === 'Prazo') ? 'block' : 'none';
+    }
+  }
+
   var qtd = parseFloat(document.getElementById('vnQtd').value) || 0;
   var val = parseFloat(document.getElementById('vnValor').value) || 0;
   var totalBruto = qtd * val;
@@ -724,7 +734,13 @@ function updateVendaCalc(){
     '</div>';
   }
 }
-function openVendaModal(venda){var isEdit=!!venda;var cliOpts=(appData.clientes||[]).map(function(c){return'<option value="'+c.nome+'"'+(venda&&venda.cliente===c.nome?' selected':'')+'>'+c.nome+'</option>';}).join('');var pgtoOpts=(appData.formasPagamentoVendas||[]).map(function(f){return'<option value="'+f+'"'+(venda&&venda.formaPagamento===f?' selected':'')+'>'+f+'</option>';}).join('');var sitOpts=(appData.situacaoVenda||[]).map(function(s){return'<option value="'+s+'"'+(venda&&venda.situacao===s?' selected':'')+'>'+s+'</option>';}).join('');var entregaOpts=(appData.situacaoEntrega||[]).map(function(s){return'<option value="'+s+'"'+(venda&&venda.entrega===s?' selected':'')+'>'+s+'</option>';}).join('');var vendedorOpts=(appData.vendedores||[]).map(function(v2){return'<option value="'+v2+'"'+(venda&&venda.vendedor===v2?' selected':'')+'>'+v2+'</option>';}).join('');var sortedProds = (appData.produtos || []).slice().sort(function(a, b) {
+function openVendaModal(venda){var isEdit=!!venda;var sortedCli = (appData.clientes || []).slice().sort(function(a, b) {
+  return (a.nome || '').localeCompare(b.nome || '');
+});
+var cliOpts = sortedCli.map(function(c) {
+  return '<option value="' + c.nome + '"' + (venda && venda.cliente === c.nome ? ' selected' : '') + '>' + c.nome + '</option>';
+}).join('');
+var pgtoOpts=(appData.formasPagamentoVendas||[]).map(function(f){return'<option value="'+f+'"'+(venda&&venda.formaPagamento===f?' selected':'')+'>'+f+'</option>';}).join('');var sitOpts=(appData.situacaoVenda||[]).map(function(s){return'<option value="'+s+'"'+(venda&&venda.situacao===s?' selected':'')+'>'+s+'</option>';}).join('');var entregaOpts=(appData.situacaoEntrega||[]).map(function(s){return'<option value="'+s+'"'+(venda&&venda.entrega===s?' selected':'')+'>'+s+'</option>';}).join('');var vendedorOpts=(appData.vendedores||[]).map(function(v2){return'<option value="'+v2+'"'+(venda&&venda.vendedor===v2?' selected':'')+'>'+v2+'</option>';}).join('');var sortedProds = (appData.produtos || []).slice().sort(function(a, b) {
   return (a.nome || '').localeCompare(b.nome || '');
 });
 var prodOpts = sortedProds.map(function(p) {
@@ -745,6 +761,12 @@ document.getElementById('cadastroModalBody').innerHTML='<div class="form-row"><d
     '<div class="form-group"><label>Parcelas</label><select class="form-control" id="vnParcelas" onchange="updateVendaCalc()">'+parcOpts+'</select></div>' +
   '</div>' +
 '</div>' +
+'<div id="vnBoletoArea" style="display:none; background:rgba(255,255,255,0.03); padding:10px; border-radius:8px; margin-bottom:15px">' +
+  '<div class="form-row">' +
+    '<div class="form-group"><label>Tipo Boleto</label><select class="form-control" id="vnBoletoModo" onchange="updateVendaCalc()"><option value="À Vista" '+(venda&&venda.boletoModo==='À Vista'?'selected':'')+'>À Vista</option><option value="Prazo" '+(venda&&venda.boletoModo==='Prazo'?'selected':'')+'>Prazo</option></select></div>' +
+    '<div class="form-group" id="vnBoletoDiasArea"><label>Dias para Venc.</label><input type="number" class="form-control" id="vnBoletoDias" value="'+(venda?venda.boletoDias||'':'')+'"></div>' +
+  '</div>' +
+'</div>' +
 '<div id="vnCalcArea"></div>' +
 '<div class="form-row"><div class="form-group"><label>Situação de Pagamento</label><select class="form-control" id="vnSit" onchange="updateVendaCalc()">'+sitOpts+'</select></div><div class="form-group"><label>Entrega</label><select class="form-control" id="vnEntrega">'+entregaOpts+'</select></div></div>' +
 '<div id="vnParcialArea" style="display:none; margin-bottom:15px"><div class="form-group"><label>Valor Pago</label><input type="number" class="form-control" id="vnValorPago" value="'+(venda?venda.valorPago||0:0)+'" step="0.01" oninput="updateVendaCalc()"></div></div>' +
@@ -756,6 +778,8 @@ function saveVenda(id){
   var modo = document.getElementById('vnModo') ? document.getElementById('vnModo').value : 'À Vista';
   var maqId = document.getElementById('vnMaq') ? parseInt(document.getElementById('vnMaq').value) : 0;
   var parcelas = document.getElementById('vnParcelas') ? parseInt(document.getElementById('vnParcelas').value) : 1;
+  var bModo = document.getElementById('vnBoletoModo') ? document.getElementById('vnBoletoModo').value : 'À Vista';
+  var bDias = document.getElementById('vnBoletoDias') ? parseInt(document.getElementById('vnBoletoDias').value) || 0 : 0;
   
   var totalBruto = qtd * val;
   var liqVal = totalBruto;
@@ -783,6 +807,8 @@ function saveVenda(id){
     modo: isCreditCard ? modo : 'À Vista',
     maquininhaId: (isCreditCard && modo === 'Dividido') ? maqId : null,
     parcelas: (isCreditCard && modo === 'Dividido') ? parcelas : null,
+    boletoModo: isBoleto ? bModo : null,
+    boletoDias: (isBoleto && bModo === 'Prazo') ? bDias : null,
     tipoVenda: document.getElementById('vnTipoVenda').value,
     valorPago: document.getElementById('vnSit').value === 'Parcial' ? parseFloat(document.getElementById('vnValorPago').value || 0) : (document.getElementById('vnSit').value === 'Pago' ? liqVal : 0),
     cliente:document.getElementById('vnCli').value,
@@ -804,7 +830,16 @@ function saveVenda(id){
   saveData();closeCadastroModal();renderVendasPage();showToast(id?'Venda atualizada!':'Venda cadastrada!','success');
 }
 function editVenda(id){var v=(appData.vendas||[]).find(function(x){return x.id===id;});if(v)openVendaModal(v);}
-function viewVenda(id){var v=(appData.vendas||[]).find(function(x){return x.id===id;});if(!v)return;var p=(appData.produtos||[]).find(function(x){return x.nome===v.produto;});var prodImg=p&&p.imagem?'<div style="text-align:center;margin-bottom:15px"><img src="'+p.imagem+'" style="max-width:150px;max-height:150px;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.2);object-fit:contain"></div>':'';var skuInfo=p&&p.sku?'<div class="detail-item"><span class="detail-label">SKU</span>'+p.sku+'</div>':'';var total=(v.quantidade||1)*(v.valorUnit||0);var liq = v.valorLiquido !== undefined ? v.valorLiquido : total;var calcInfo = ''; if(v.taxa > 0){ calcInfo = '<div class="detail-item"><span class="detail-label">Máquina</span>'+(appData.maquininhas.find(m=>m.id===v.maquininhaId)?.nome||'-')+' ('+v.parcelas+'x)</div>' + '<div class="detail-item"><span class="detail-label">Taxa</span>'+v.taxa+'% (- '+formatCurrency(total - liq)+')</div>'; } var parcialInfo = ''; if(v.situacao === 'Parcial'){ parcialInfo = '<div class="detail-item"><span class="detail-label">Valor Já Pago</span>'+formatCurrency(v.valorPago||0)+'</div>' + '<div class="detail-item"><span class="detail-label">Saldo Devedor</span><strong class="text-danger">'+formatCurrency(liq - (v.valorPago||0))+'</strong></div>'; } document.getElementById('viewModalTitle').textContent='Detalhes da Venda';document.getElementById('viewModalBody').innerHTML=prodImg+'<div class="detail-grid"><div class="detail-item"><span class="detail-label">Data</span>'+formatDate(v.data)+'</div><div class="detail-item"><span class="detail-label">Tipo de Venda</span>'+(v.tipoVenda||'Direta')+'</div><div class="detail-item"><span class="detail-label">Produto</span>'+v.produto+'</div>'+skuInfo+'<div class="detail-item"><span class="detail-label">Qtd</span>'+v.quantidade+'</div><div class="detail-item"><span class="detail-label">V.Unit</span>'+formatCurrency(v.valorUnit)+'</div><div class="detail-item"><span class="detail-label">Total Bruto</span>'+formatCurrency(total)+'</div>'+calcInfo+'<div class="detail-item"><span class="detail-label">Total Líquido</span><strong class="text-success">'+formatCurrency(liq)+'</strong></div>'+parcialInfo+'<div class="detail-item"><span class="detail-label">Cliente</span>'+(v.cliente||'-')+'</div><div class="detail-item"><span class="detail-label">Pgto</span>'+(v.formaPagamento||'-')+'</div><div class="detail-item"><span class="detail-label">Situação de Pagamento</span>'+situacaoBadge(v.situacao)+'</div><div class="detail-item"><span class="detail-label">Entrega</span>'+situacaoBadge(v.entrega)+'</div><div class="detail-item"><span class="detail-label">Vendedor</span>'+(v.vendedor||'-')+'</div></div>'+(v.obs?'<div style="margin-top:12px;padding:10px;background:var(--bg-tertiary);border-radius:var(--radius-sm)"><strong>Obs:</strong> '+v.obs+'</div>':'');openViewModal();}
+function viewVenda(id){var v=(appData.vendas||[]).find(function(x){return x.id===id;});if(!v)return;var p=(appData.produtos||[]).find(function(x){return x.nome===v.produto;});var prodImg=p&&p.imagem?'<div style="text-align:center;margin-bottom:15px"><img src="'+p.imagem+'" style="max-width:150px;max-height:150px;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.2);object-fit:contain"></div>':'';var skuInfo=p&&p.sku?'<div class="detail-item"><span class="detail-label">SKU</span>'+p.sku+'</div>':'';var total=(v.quantidade||1)*(v.valorUnit||0);var liq = v.valorLiquido !== undefined ? v.valorLiquido : total;
+var calcInfo = ''; 
+if(v.taxa > 0){ 
+  calcInfo = '<div class="detail-item"><span class="detail-label">Máquina</span>'+(appData.maquininhas.find(m=>m.id===v.maquininhaId)?.nome||'-')+' ('+v.parcelas+'x)</div>' + '<div class="detail-item"><span class="detail-label">Taxa</span>'+v.taxa+'% (- '+formatCurrency(total - liq)+')</div>'; 
+} 
+if(v.boletoModo){
+  calcInfo += '<div class="detail-item"><span class="detail-label">Tipo Boleto</span>'+v.boletoModo+'</div>';
+  if(v.boletoModo === 'Prazo') calcInfo += '<div class="detail-item"><span class="detail-label">Dias para Venc.</span>'+(v.boletoDias||0)+' dias</div>';
+}
+var parcialInfo = ''; if(v.situacao === 'Parcial'){ parcialInfo = '<div class="detail-item"><span class="detail-label">Valor Já Pago</span>'+formatCurrency(v.valorPago||0)+'</div>' + '<div class="detail-item"><span class="detail-label">Saldo Devedor</span><strong class="text-danger">'+formatCurrency(liq - (v.valorPago||0))+'</strong></div>'; } document.getElementById('viewModalTitle').textContent='Detalhes da Venda';document.getElementById('viewModalBody').innerHTML=prodImg+'<div class="detail-grid"><div class="detail-item"><span class="detail-label">Data</span>'+formatDate(v.data)+'</div><div class="detail-item"><span class="detail-label">Tipo de Venda</span>'+(v.tipoVenda||'Direta')+'</div><div class="detail-item"><span class="detail-label">Produto</span>'+v.produto+'</div>'+skuInfo+'<div class="detail-item"><span class="detail-label">Qtd</span>'+v.quantidade+'</div><div class="detail-item"><span class="detail-label">V.Unit</span>'+formatCurrency(v.valorUnit)+'</div><div class="detail-item"><span class="detail-label">Total Bruto</span>'+formatCurrency(total)+'</div>'+calcInfo+'<div class="detail-item"><span class="detail-label">Total Líquido</span><strong class="text-success">'+formatCurrency(liq)+'</strong></div>'+parcialInfo+'<div class="detail-item"><span class="detail-label">Cliente</span>'+(v.cliente||'-')+'</div><div class="detail-item"><span class="detail-label">Pgto</span>'+(v.formaPagamento||'-')+'</div><div class="detail-item"><span class="detail-label">Situação de Pagamento</span>'+situacaoBadge(v.situacao)+'</div><div class="detail-item"><span class="detail-label">Entrega</span>'+situacaoBadge(v.entrega)+'</div><div class="detail-item"><span class="detail-label">Vendedor</span>'+(v.vendedor||'-')+'</div></div>'+(v.obs?'<div style="margin-top:12px;padding:10px;background:var(--bg-tertiary);border-radius:var(--radius-sm)"><strong>Obs:</strong> '+v.obs+'</div>':'');openViewModal();}
 function deleteVenda(id){if(!confirm('Excluir venda?'))return;appData.vendas=(appData.vendas||[]).filter(function(v){return v.id!==id;});saveData();renderVendasPage();showToast('Venda excluída!','success');}
 function onVendasSearch(q){vendasSearchQuery=q.toLowerCase();applyVendasFilters();}
 function onVendasFilterSit(v){vendasFilterSit=v;applyVendasFilters();}
