@@ -17,6 +17,8 @@ let vendasSearchQuery = '';
 let vendasFilterSit = '';
 let fluxoFilterText = '';
 let fluxoFilterTipo = '';
+let produtosSearchQuery = '';
+let produtosFilterCat = '';
 
 // ── HISTÓRICO UNDO/REDO ──
 var undoHistory = [];
@@ -825,13 +827,84 @@ function filterEstoque(q){var list=appData.estoque||[];if(q)list=list.filter(fun
 // ══════════════════════════════════════════════════════════════
 // ── PRODUTOS ──
 // ══════════════════════════════════════════════════════════════
-function renderProdutosPage(){var pg=document.getElementById('page-produtos');if(!pg)return;pg.innerHTML='<div class="page-header"><h2>🏷️ Produtos</h2><button class="btn btn-primary" onclick="openProdutoModal()">+ Novo Produto</button></div><div class="filter-bar"><input type="text" class="form-control" style="max-width:250px" placeholder="Buscar produto..." oninput="filterProdutos(this.value)"></div><div class="table-responsive"><table class="table"><thead><tr><th>Imagem</th><th>SKU</th><th>Nome</th><th>Categoria</th><th>V.Custo</th><th>V.Venda</th><th>V.Revenda</th><th>Ações</th></tr></thead><tbody id="produtosBody"></tbody></table></div>';renderProdutosTable(appData.produtos||[]);}
-function renderProdutosTable(list){var tbody=document.getElementById('produtosBody');if(!tbody)return;if(list.length===0){tbody.innerHTML='<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--text-muted)">Nenhum produto</td></tr>';return;}tbody.innerHTML=list.map(function(p){var img=p.imagem?'<img src="'+p.imagem+'" style="width:40px;height:40px;border-radius:4px;object-fit:cover">':'<span style="color:var(--text-muted)">-</span>';return'<tr><td>'+img+'</td><td>'+(p.sku||'-')+'</td><td>'+(p.nome||'-')+'</td><td>'+(p.categoria||'-')+'</td><td>'+formatCurrency(p.valorCompra)+'</td><td>'+formatCurrency(p.valorVenda)+'</td><td>'+formatCurrency(p.valorRevenda)+'</td><td><button class="btn btn-sm btn-primary" onclick="editProduto('+p.id+')">✏️</button> <button class="btn btn-sm btn-danger" onclick="deleteProduto('+p.id+')">🗑️</button></td></tr>';}).join('');}
+function renderProdutosPage(){
+  var pg=document.getElementById('page-produtos');
+  if(!pg)return;
+  var catOpts=(appData.categoriasProdutos||[]).map(function(c){return'<option value="'+c+'">'+c+'</option>';}).join('');
+  pg.innerHTML='<div class="page-header"><h2>🏷️ Produtos</h2><button class="btn btn-primary" onclick="openProdutoModal()">+ Novo Produto</button></div>'+
+    '<div class="filter-bar">'+
+      '<input type="text" class="form-control" style="max-width:250px" placeholder="Buscar produto..." oninput="produtosSearchQuery=this.value;applyProdutosFilters()">'+
+      '<select class="form-control" style="max-width:180px" onchange="produtosFilterCat=this.value;applyProdutosFilters()">'+
+        '<option value="">Todas Categorias</option>'+catOpts+
+      '</select>'+
+    '</div>'+
+    '<div class="table-responsive">'+
+      '<table class="table">'+
+        '<thead>'+
+          '<tr>'+
+            '<th>Imagem</th><th>SKU</th><th>Nome</th><th>Categoria</th><th>V.Custo</th><th>V.Venda</th><th>Lucro (R$)</th><th>Lucro (%)</th><th>V.Revenda</th><th>Lucro Rev. (R$)</th><th>Lucro Rev. (%)</th><th>Ações</th>'+
+          '</tr>'+
+        '</thead>'+
+        '<tbody id="produtosBody"></tbody>'+
+      '</table>'+
+    '</div>';
+  renderProdutosTable(appData.produtos||[]);
+}
+function renderProdutosTable(list){
+  var tbody=document.getElementById('produtosBody');
+  if(!tbody)return;
+  if(list.length===0){
+    tbody.innerHTML='<tr><td colspan="12" style="text-align:center;padding:40px;color:var(--text-muted)">Nenhum produto</td></tr>';
+    return;
+  }
+  tbody.innerHTML=list.map(function(p){
+    var img=p.imagem?'<img src="'+p.imagem+'" style="width:40px;height:40px;border-radius:4px;object-fit:cover">':'<span style="color:var(--text-muted)">-</span>';
+    
+    var lucro = (p.valorVenda||0) - (p.valorCompra||0);
+    var lucroPerc = (p.valorCompra > 0) ? (lucro / p.valorCompra) * 100 : 0;
+    
+    var lucroRev = (p.valorRevenda||0) - (p.valorCompra||0);
+    var lucroRevPerc = (p.valorCompra > 0) ? (lucroRev / p.valorCompra) * 100 : 0;
+
+    return '<tr>'+
+      '<td>'+img+'</td>'+
+      '<td>'+(p.sku||'-')+'</td>'+
+      '<td>'+(p.nome||'-')+'</td>'+
+      '<td>'+(p.categoria||'-')+'</td>'+
+      '<td>'+formatCurrency(p.valorCompra)+'</td>'+
+      '<td>'+formatCurrency(p.valorVenda)+'</td>'+
+      '<td class="text-success" style="font-weight:600">'+formatCurrency(lucro)+'</td>'+
+      '<td class="text-success">'+lucroPerc.toFixed(1)+'%</td>'+
+      '<td>'+formatCurrency(p.valorRevenda)+'</td>'+
+      '<td class="text-info" style="font-weight:600">'+formatCurrency(lucroRev)+'</td>'+
+      '<td class="text-info">'+lucroRevPerc.toFixed(1)+'%</td>'+
+      '<td>'+
+        '<button class="btn btn-sm btn-primary" onclick="editProduto('+p.id+')">✏️</button> '+
+        '<button class="btn btn-sm btn-danger" onclick="deleteProduto('+p.id+')">🗑️</button>'+
+      '</td>'+
+    '</tr>';
+  }).join('');
+}
 function openProdutoModal(prod){var isEdit=!!prod;var catOpts=(appData.categoriasProdutos||[]).map(function(c){return'<option value="'+c+'"'+(prod&&prod.categoria===c?' selected':'')+'>'+c+'</option>';}).join('');document.getElementById('cadastroModalTitle').textContent=isEdit?'Editar Produto':'Novo Produto';document.getElementById('cadastroModalBody').innerHTML='<div class="form-row"><div class="form-group"><label>Nome *</label><input type="text" class="form-control" id="prNome" value="'+(prod?prod.nome:'')+'"></div><div class="form-group"><label>SKU (opcional)</label><input type="text" class="form-control" id="prSku" value="'+(prod?prod.sku||'':'')+'"></div></div><div class="form-row"><div class="form-group"><label>Categoria</label><select class="form-control" id="prCat"><option value="">Selecione...</option>'+catOpts+'</select></div><div class="form-group"><label>V.Custo</label><input type="number" class="form-control" id="prVCompra" value="'+(prod?prod.valorCompra:'')+'" step="0.01"></div></div><div class="form-row"><div class="form-group"><label>V.Venda</label><input type="number" class="form-control" id="prVVenda" value="'+(prod?prod.valorVenda:'')+'" step="0.01"></div><div class="form-group"><label>V.Revenda</label><input type="number" class="form-control" id="prVRevenda" value="'+(prod?prod.valorRevenda:'')+'" step="0.01"></div></div><div class="form-group"><label>Imagem</label><input type="file" class="form-control" id="prImgInput" accept="image/*"><div id="prImgPreview" style="margin-top:8px">'+(prod&&prod.imagem?'<img src="'+prod.imagem+'" style="max-width:100px;max-height:80px;border-radius:4px;object-fit:cover">':'')+'</div></div><div class="form-group"><label>Descrição</label><textarea class="form-control" id="prDesc" rows="2">'+(prod?prod.descricao||'':'')+'</textarea></div>';document.getElementById('cadastroModalFooter').innerHTML='<button class="btn btn-secondary" onclick="closeCadastroModal()">Cancelar</button><button class="btn btn-primary" onclick="saveProduto('+(isEdit?prod.id:'null')+')">Salvar</button>';openCadastroModal();setTimeout(function(){handleImageUpload('prImgInput','prImgPreview');},100);}
 function saveProduto(id){var imgEl=document.getElementById('prImgInput');var imgB64=imgEl?imgEl.getAttribute('data-base64')||'':'';var existing=id?(appData.produtos||[]).find(function(p){return p.id===id;}):null;var obj={nome:document.getElementById('prNome').value.trim(),sku:document.getElementById('prSku').value.trim(),categoria:document.getElementById('prCat').value.trim(),valorCompra:parseFloat(document.getElementById('prVCompra').value)||0,valorVenda:parseFloat(document.getElementById('prVVenda').value)||0,valorRevenda:parseFloat(document.getElementById('prVRevenda').value)||0,imagem:imgB64||(existing?existing.imagem||'':''),descricao:document.getElementById('prDesc').value};if(!obj.nome){showToast('Informe o nome','error');return;}if(!appData.produtos)appData.produtos=[];if(id){var idx=appData.produtos.findIndex(function(p){return p.id===id;});if(idx>-1){obj.id=id;appData.produtos[idx]=obj;}}else{obj.id=nextId(appData.produtos);appData.produtos.push(obj);}saveData();closeCadastroModal();renderProdutosPage();showToast(id?'Atualizado!':'Cadastrado!','success');}
 function editProduto(id){var p=(appData.produtos||[]).find(function(x){return x.id===id;});if(p)openProdutoModal(p);}
 function deleteProduto(id){if(!confirm('Excluir produto?'))return;appData.produtos=(appData.produtos||[]).filter(function(p){return p.id!==id;});saveData();renderProdutosPage();showToast('Excluído!','success');}
-function filterProdutos(q){var list=appData.produtos||[];if(q)list=list.filter(function(p){return(p.nome||'').toLowerCase().includes(q.toLowerCase());});renderProdutosTable(list);}
+function filterProdutos(q){ produtosSearchQuery=q; applyProdutosFilters(); }
+function applyProdutosFilters(){
+  var list = appData.produtos || [];
+  if(produtosSearchQuery){
+    var q = produtosSearchQuery.toLowerCase();
+    list = list.filter(function(p){
+      return (p.nome||'').toLowerCase().includes(q) || (p.sku||'').toLowerCase().includes(q);
+    });
+  }
+  if(produtosFilterCat){
+    list = list.filter(function(p){
+      return p.categoria === produtosFilterCat;
+    });
+  }
+  renderProdutosTable(list);
+}
 
 // ══════════════════════════════════════════════════════════════
 // ── CLIENTES ──
