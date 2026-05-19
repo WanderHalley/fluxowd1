@@ -787,6 +787,7 @@ function saveVenda(id){
 
   var cleanPgto = pgto.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
   var isCreditCard = cleanPgto.includes("cartao de credito");
+  var isBoleto = cleanPgto.includes("boleto");
 
   if(isCreditCard && modo === 'Dividido'){
     var maq = (appData.maquininhas||[]).find(function(m){return m.id === maqId;});
