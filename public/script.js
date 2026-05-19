@@ -685,7 +685,13 @@ function applyComprasFilters(){
   if(comprasFilterPgto)list=list.filter(function(c){return c.formaPagamento===comprasFilterPgto;});
   
   list.sort(function(a, b) {
-    return (a.produto || '').localeCompare(b.produto || '');
+    var pA = (a.produto || '').trim().toUpperCase();
+    var pB = (b.produto || '').trim().toUpperCase();
+    if(pA !== pB) return pA.localeCompare(pB);
+    var fA = (a.fornecedor || '').trim().toUpperCase();
+    var fB = (b.fornecedor || '').trim().toUpperCase();
+    if(fA !== fB) return fA.localeCompare(fB);
+    return (b.data || '').localeCompare(a.data || '');
   });
 
   renderComprasTable(list);
@@ -917,7 +923,13 @@ function applyVendasFilters(){
   if(vendasFilterSit)list=list.filter(function(v){return v.situacao===vendasFilterSit;});
   
   list.sort(function(a, b) {
-    return (a.produto || '').localeCompare(b.produto || '');
+    var pA = (a.produto || '').trim().toUpperCase();
+    var pB = (b.produto || '').trim().toUpperCase();
+    if(pA !== pB) return pA.localeCompare(pB);
+    var cA = (a.cliente || '').trim().toUpperCase();
+    var cB = (b.cliente || '').trim().toUpperCase();
+    if(cA !== cB) return cA.localeCompare(cB);
+    return (b.data || '').localeCompare(a.data || '');
   });
 
   renderVendasTable(list);
@@ -934,7 +946,16 @@ panel.innerHTML='<div class="card"><div class="card-header"><span>Total Bruto</s
 // ══════════════════════════════════════════════════════════════
 // ── ESTOQUE ──
 // ══════════════════════════════════════════════════════════════
-function renderEstoquePage(){var pg=document.getElementById('page-estoque');if(!pg)return;pg.innerHTML='<div class="page-header"><h2>📦 Estoque</h2><button class="btn btn-primary" onclick="openEstoqueModal()">+ Novo Item</button></div><div class="filter-bar"><input type="text" class="form-control" style="max-width:250px" placeholder="Buscar no estoque..." oninput="filterEstoque(this.value)"></div><div class="table-responsive"><table class="table"><thead><tr><th>Produto</th><th>Unidade</th><th>Qtd</th><th>V.Unit</th><th>Total</th><th>Local</th><th>Ações</th></tr></thead><tbody id="estoqueBody"></tbody></table></div>';renderEstoqueTable(appData.estoque||[]);}
+function renderEstoquePage(){
+  var pg=document.getElementById('page-estoque');
+  if(!pg)return;
+  pg.innerHTML='<div class="page-header"><h2>📦 Estoque</h2><button class="btn btn-primary" onclick="openEstoqueModal()">+ Novo Item</button></div><div class="filter-bar"><input type="text" class="form-control" style="max-width:250px" placeholder="Buscar no estoque..." oninput="filterEstoque(this.value)"></div><div class="table-responsive"><table class="table"><thead><tr><th>Produto</th><th>Unidade</th><th>Qtd</th><th>V.Unit</th><th>Total</th><th>Local</th><th>Ações</th></tr></thead><tbody id="estoqueBody"></tbody></table></div>';
+  
+  var list = (appData.estoque || []).slice().sort(function(a, b) {
+    return (a.produto || '').trim().toUpperCase().localeCompare((b.produto || '').trim().toUpperCase());
+  });
+  renderEstoqueTable(list);
+}
 function renderEstoqueTable(list){var tbody=document.getElementById('estoqueBody');if(!tbody)return;if(list.length===0){tbody.innerHTML='<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--text-muted)">Estoque vazio</td></tr>';return;}tbody.innerHTML=list.map(function(e){var total=(e.quantidade||0)*(e.valorUnit||0);return'<tr><td>'+(e.produto||'-')+'</td><td>'+(e.unidade||'-')+'</td><td>'+(e.quantidade||0)+'</td><td>'+formatCurrency(e.valorUnit)+'</td><td>'+formatCurrency(total)+'</td><td>'+(e.local||'-')+'</td><td><button class="btn btn-sm btn-primary" onclick="editEstoque('+e.id+')">✏️</button> <button class="btn btn-sm btn-danger" onclick="deleteEstoque('+e.id+')">🗑️</button></td></tr>';}).join('');}
 function openEstoqueModal(item){var isEdit=!!item;var unOpts=(appData.tipoUnidade||[]).map(function(u){return'<option value="'+u+'"'+(item&&item.unidade===u?' selected':'')+'>'+u+'</option>';}).join('');document.getElementById('cadastroModalTitle').textContent=isEdit?'Editar Item':'Novo Item de Estoque';document.getElementById('cadastroModalBody').innerHTML='<div class="form-group"><label>Produto *</label><input type="text" class="form-control" id="estProd" value="'+(item?item.produto:'')+'"></div><div class="form-row"><div class="form-group"><label>Unidade</label><select class="form-control" id="estUn">'+unOpts+'</select></div><div class="form-group"><label>Qtd</label><input type="number" class="form-control" id="estQtd" value="'+(item?item.quantidade:0)+'" min="0"></div></div><div class="form-row"><div class="form-group"><label>Valor Unit.</label><input type="number" class="form-control" id="estValor" value="'+(item?item.valorUnit:'')+'" step="0.01"></div><div class="form-group"><label>Local</label><input type="text" class="form-control" id="estLocal" value="'+(item?item.local||'':'')+'"></div></div>';document.getElementById('cadastroModalFooter').innerHTML='<button class="btn btn-secondary" onclick="closeCadastroModal()">Cancelar</button><button class="btn btn-primary" onclick="saveEstoque('+(isEdit?item.id:'null')+')">Salvar</button>';openCadastroModal();}
 function saveEstoque(id){var obj={produto:document.getElementById('estProd').value.trim(),unidade:document.getElementById('estUn').value,quantidade:parseFloat(document.getElementById('estQtd').value)||0,valorUnit:parseFloat(document.getElementById('estValor').value)||0,local:document.getElementById('estLocal').value.trim()};if(!obj.produto){showToast('Informe o produto','error');return;}if(!appData.estoque)appData.estoque=[];if(id){var idx=appData.estoque.findIndex(function(e){return e.id===id;});if(idx>-1){obj.id=id;appData.estoque[idx]=obj;}}else{obj.id=nextId(appData.estoque);appData.estoque.push(obj);}saveData();closeCadastroModal();renderEstoquePage();showToast(id?'Atualizado!':'Cadastrado!','success');}
