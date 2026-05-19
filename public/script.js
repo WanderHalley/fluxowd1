@@ -276,12 +276,13 @@ function closeViewModal(){document.getElementById('viewModal').style.display='no
 function toggleSidebar(){
   var sb = document.getElementById('sidebar');
   var overlay = document.getElementById('sidebarOverlay');
-  var isMobile = window.matchMedia("(max-width: 768px)").matches;
+  if(!sb) return;
+  
+  var isMobile = window.innerWidth <= 768;
   
   if(isMobile){
     sb.classList.toggle('open');
     var isOpen = sb.classList.contains('open');
-    console.log('Mobile sidebar toggle:', isOpen);
     if(isOpen){
       sb.classList.remove('collapsed');
       if(overlay) overlay.classList.add('show');
@@ -2034,8 +2035,20 @@ document.addEventListener('keydown',function(e){
     collapseSidebar();
   }
   renderDashboard();
-  var mobileMenuBtn = document.getElementById('mobileMenuBtn');
-  if(mobileMenuBtn) mobileMenuBtn.addEventListener('click', function(e){ e.stopPropagation(); toggleSidebar(); });
   document.getElementById('cadastroModal').addEventListener('mousedown',function(e){if(e.target===this)closeCadastroModal();});
   document.getElementById('viewModal').addEventListener('mousedown',function(e){if(e.target===this)closeViewModal();});
 })();
+
+// Adiciona listener fora do async init para garantir execução rápida
+window.addEventListener('load', function() {
+  var mobileBtn = document.getElementById('mobileMenuBtn');
+  if(mobileBtn) {
+    mobileBtn.onclick = function(e){ e.stopPropagation(); toggleSidebar(); };
+    mobileBtn.ontouchstart = function(e){ e.stopPropagation(); toggleSidebar(); e.preventDefault(); };
+  }
+  var overlay = document.getElementById('sidebarOverlay');
+  if(overlay) {
+    overlay.onclick = function(){ toggleSidebar(); };
+    overlay.ontouchstart = function(){ toggleSidebar(); };
+  }
+});

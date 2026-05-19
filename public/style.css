@@ -231,7 +231,7 @@ body {
     align-items: center;
     justify-content: center;
     position: relative;
-    z-index: 2100;
+    z-index: 3000 !important; /* Above everything to ensure clickability */
     -webkit-tap-highlight-color: transparent;
 }
 
@@ -241,15 +241,16 @@ body {
     position: fixed;
     top: 0;
     left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.5);
-    z-index: 95;
-    backdrop-filter: blur(2px);
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 1000;
+    backdrop-filter: blur(4px);
+    cursor: pointer;
 }
 
 .sidebar-overlay.show {
-    display: block;
+    display: block !important;
 }
 
 .topbar-title {
@@ -656,30 +657,37 @@ body {
 
 /* RESPONSIVE */
 @media (max-width: 768px) {
+    .topbar {
+        position: sticky;
+        top: 0;
+        z-index: 1001; /* Above main content but below sidebar (9999) */
+        background: #111111 !important;
+    }
     .sidebar {
         position: fixed !important;
-        left: -300px !important;
+        left: -300px; /* Removed !important to allow .open to override easily */
         top: 0 !important;
         height: 100vh !important;
-        z-index: 2000 !important;
+        z-index: 9999 !important; /* Very high z-index */
         width: 280px !important;
         transition: left 0.3s ease !important;
         display: flex !important;
-        background: var(--bg-secondary) !important;
+        background: #111111 !important; /* Dark solid background */
+        border-right: 1px solid rgba(255,255,255,0.1) !important;
     }
     .sidebar.open { 
         left: 0 !important; 
-        box-shadow: 10px 0 50px rgba(0,0,0,0.8) !important;
+        box-shadow: 10px 0 50px rgba(0,0,0,0.9) !important;
     }
     .sidebar-overlay {
         display: none;
         position: fixed;
         top: 0;
         left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.6);
-        z-index: 1500;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(0, 0, 0, 0.8);
+        z-index: 9000; /* Just below sidebar */
         backdrop-filter: blur(4px);
     }
     .sidebar-overlay.show { display: block; }

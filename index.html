@@ -85,7 +85,7 @@
     <main class="main-content">
         <div class="topbar">
             <div class="topbar-left">
-                <button class="menu-toggle" id="mobileMenuBtn">☰</button>
+                <button class="menu-toggle" id="mobileMenuBtn" onclick="event.stopPropagation(); toggleSidebar()" aria-label="Menu">☰</button>
                 <button class="expand-btn" id="expandBtn" onclick="collapseSidebar()" style="display:none;" title="Expandir menu">»</button>
                 <span class="topbar-title" id="pageTitle">Dashboard</span>
             </div>
