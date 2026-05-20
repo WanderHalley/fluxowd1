@@ -655,6 +655,20 @@ body {
         width: 260px;
         min-width: 260px;
     }
+
+    .sidebar {
+        position: fixed;
+        left: -260px;
+        top: 0;
+        height: 100vh;
+        z-index: 1000;
+        transition: left 0.3s ease;
+    }
+    .menu-toggle {
+        display: block;
+        z-index: 1001;
+        position: relative;
+    }
 }
 /* ==========================================
    CONFIGURAÇÕES — Layout bonito + Drag & Drop

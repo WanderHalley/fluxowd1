@@ -311,18 +311,34 @@ function closeViewModal(){document.getElementById('viewModal').style.display='no
 // ── SIDEBAR ──
 function toggleSidebar() {
     var sidebar = document.getElementById('sidebar');
+    var isOpen = sidebar.style.left === '0px';
     if (window.innerWidth <= 768) {
-        sidebar.classList.toggle('active');
-        sidebar.classList.toggle('open');
+        if (isOpen) {
+            sidebar.style.left = '-260px';
+        } else {
+            sidebar.style.left = '0px';
+        }
     } else {
         sidebar.classList.toggle('collapsed');
         syncExpandBtn();
     }
 }
 
+// Garante que funciona no touch mobile
+document.addEventListener('DOMContentLoaded', function() {
+    var menuBtn = document.querySelector('.menu-toggle');
+    if (menuBtn) {
+        menuBtn.addEventListener('touchstart', function(e) {
+            e.preventDefault();
+            toggleSidebar();
+        });
+    }
+});
+
 function collapseSidebar() {
     var sidebar = document.getElementById('sidebar');
     if (window.innerWidth <= 768) {
+        sidebar.style.left = '-260px';
         sidebar.classList.remove('active');
         sidebar.classList.remove('open');
     } else {
@@ -334,6 +350,7 @@ function collapseSidebar() {
 function closeSidebarMobile() {
     var sidebar = document.getElementById('sidebar');
     if (sidebar) {
+        sidebar.style.left = '-260px';
         sidebar.classList.remove('active');
         sidebar.classList.remove('open');
     }
@@ -346,6 +363,7 @@ document.addEventListener('click', function(e) {
         var menuBtn = document.querySelector('.menu-toggle');
         // Se clicou fora do sidebar e fora do botão de menu
         if (sidebar && !sidebar.contains(e.target) && menuBtn && !menuBtn.contains(e.target)) {
+            sidebar.style.left = '-260px';
             sidebar.classList.remove('active');
             sidebar.classList.remove('open');
         }
