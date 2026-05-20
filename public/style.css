@@ -633,42 +633,36 @@ body {
     .sidebar {
         position: fixed;
         left: -260px;
+        top: 0;
+        height: 100vh;
+        z-index: 9999;
+        transition: left 0.3s ease;
         box-shadow: 10px 0 30px rgba(0,0,0,0.5);
-        transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
-    .sidebar.open { left: 0; width: 260px; min-width: 260px; }
-    .sidebar.collapsed { left: -260px; }
-    .sidebar-collapse-btn { display: none; }
-    .expand-btn { display: none !important; }
-    .menu-toggle { display: block; }
-    .dashboard-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
-    .form-row { grid-template-columns: 1fr; }
-    .detail-grid { grid-template-columns: 1fr; }
-    
-    .main-content { margin-left: 0 !important; }
-    
-    .modal { width: 95%; padding: 10px; }
-
-    .sidebar.active,
     .sidebar.open {
         left: 0;
         width: 260px;
         min-width: 260px;
     }
-
-    .sidebar {
-        position: fixed;
+    .sidebar.collapsed {
         left: -260px;
-        top: 0;
-        height: 100vh;
-        z-index: 1000;
-        transition: left 0.3s ease;
     }
+    .sidebar-collapse-btn { display: none; }
+    .expand-btn { display: none !important; }
     .menu-toggle {
         display: block;
-        z-index: 1001;
+        z-index: 10000;
         position: relative;
+        -webkit-tap-highlight-color: transparent;
+        touch-action: manipulation;
+        padding: 10px;
+        font-size: 1.8rem;
     }
+    .main-content { margin-left: 0 !important; }
+    .modal { width: 95%; padding: 10px; }
+    .dashboard-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
+    .form-row { grid-template-columns: 1fr; }
+    .detail-grid { grid-template-columns: 1fr; }
 }
 /* ==========================================
    CONFIGURAÇÕES — Layout bonito + Drag & Drop

@@ -311,35 +311,17 @@ function closeViewModal(){document.getElementById('viewModal').style.display='no
 // ── SIDEBAR ──
 function toggleSidebar() {
     var sidebar = document.getElementById('sidebar');
-    var isOpen = sidebar.style.left === '0px';
     if (window.innerWidth <= 768) {
-        if (isOpen) {
-            sidebar.style.left = '-260px';
-        } else {
-            sidebar.style.left = '0px';
-        }
+        sidebar.classList.toggle('open');
     } else {
         sidebar.classList.toggle('collapsed');
         syncExpandBtn();
     }
 }
 
-// Garante que funciona no touch mobile
-document.addEventListener('DOMContentLoaded', function() {
-    var menuBtn = document.querySelector('.menu-toggle');
-    if (menuBtn) {
-        menuBtn.addEventListener('touchstart', function(e) {
-            e.preventDefault();
-            toggleSidebar();
-        });
-    }
-});
-
 function collapseSidebar() {
     var sidebar = document.getElementById('sidebar');
     if (window.innerWidth <= 768) {
-        sidebar.style.left = '-260px';
-        sidebar.classList.remove('active');
         sidebar.classList.remove('open');
     } else {
         sidebar.classList.toggle('collapsed');
@@ -348,11 +330,9 @@ function collapseSidebar() {
 }
 
 function closeSidebarMobile() {
-    var sidebar = document.getElementById('sidebar');
-    if (sidebar) {
-        sidebar.style.left = '-260px';
-        sidebar.classList.remove('active');
-        sidebar.classList.remove('open');
+    if (window.innerWidth <= 768) {
+        var sidebar = document.getElementById('sidebar');
+        if (sidebar) sidebar.classList.remove('open');
     }
 }
 
@@ -361,10 +341,7 @@ document.addEventListener('click', function(e) {
     if (window.innerWidth <= 768) {
         var sidebar = document.getElementById('sidebar');
         var menuBtn = document.querySelector('.menu-toggle');
-        // Se clicou fora do sidebar e fora do botão de menu
         if (sidebar && !sidebar.contains(e.target) && menuBtn && !menuBtn.contains(e.target)) {
-            sidebar.style.left = '-260px';
-            sidebar.classList.remove('active');
             sidebar.classList.remove('open');
         }
     }
@@ -389,15 +366,13 @@ function updateSidebarInfo(){
 var pageTitles={'dashboard':'Dashboard','janeiro':'Janeiro','fevereiro':'Fevereiro','marco':'Março','abril':'Abril','maio':'Maio','junho':'Junho','julho':'Julho','agosto':'Agosto','setembro':'Setembro','outubro':'Outubro','novembro':'Novembro','dezembro':'Dezembro','compras':'Compras','vendas':'Vendas','estoque':'Estoque','produtos':'Produtos','clientes':'Clientes','fornecedores':'Fornecedores','pfornecedores':'P. Fornecedores','boletos':'Boletos','cheques':'Cheques','prestacoes':'Prestações','projetos':'Projetos','pagclientes':'Pag. Clientes','garantias':'Garantias','relatorios':'Relatórios','notasentrada':'Notas Entrada','notassaida':'Notas Saída','receitasmei':'Receitas MEI','configuracoes':'Configurações','backup':'Backup'};
 
 function navigateTo(page){
-  var sb = document.getElementById('sidebar');
-  if(sb && sb.classList.contains('open')) sb.classList.remove('open'); // Close on mobile navigation
+  closeSidebarMobile();
 
   document.querySelectorAll('.page-content').forEach(function(p){p.style.display='none';});
   var el=document.getElementById('page-'+page);if(el)el.style.display='block';
   var te=document.getElementById('pageTitle');if(te)te.textContent=pageTitles[page]||page;
   document.querySelectorAll('.nav-item').forEach(function(n){n.classList.remove('active');});
   var ni=document.querySelector('.nav-item[onclick*="'+page+'"]');if(ni)ni.classList.add('active');
-  document.getElementById('sidebar').classList.remove('active');
   var meses=['janeiro','fevereiro','marco','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
   var mi=meses.indexOf(page);
   if(page==='dashboard') renderDashboard();
