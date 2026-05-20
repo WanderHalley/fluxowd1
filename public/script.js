@@ -311,21 +311,46 @@ function closeViewModal(){document.getElementById('viewModal').style.display='no
 // ── SIDEBAR ──
 function toggleSidebar() {
     var sidebar = document.getElementById('sidebar');
-    // Verifica se é mobile (largura até 768px)
     if (window.innerWidth <= 768) {
+        sidebar.classList.toggle('active');
         sidebar.classList.toggle('open');
     } else {
-        // Comportamento desktop original
         sidebar.classList.toggle('collapsed');
         syncExpandBtn();
     }
 }
-function collapseSidebar(){
-  var sb = document.getElementById('sidebar');
-  sb.classList.toggle('collapsed');
-  sb.classList.remove('open');
-  syncExpandBtn();
+
+function collapseSidebar() {
+    var sidebar = document.getElementById('sidebar');
+    if (window.innerWidth <= 768) {
+        sidebar.classList.remove('active');
+        sidebar.classList.remove('open');
+    } else {
+        sidebar.classList.toggle('collapsed');
+        syncExpandBtn();
+    }
 }
+
+function closeSidebarMobile() {
+    var sidebar = document.getElementById('sidebar');
+    if (sidebar) {
+        sidebar.classList.remove('active');
+        sidebar.classList.remove('open');
+    }
+}
+
+// Fecha o menu mobile ao clicar em qualquer item de navegação
+document.addEventListener('click', function(e) {
+    if (window.innerWidth <= 768) {
+        var sidebar = document.getElementById('sidebar');
+        var menuBtn = document.querySelector('.menu-toggle');
+        // Se clicou fora do sidebar e fora do botão de menu
+        if (sidebar && !sidebar.contains(e.target) && menuBtn && !menuBtn.contains(e.target)) {
+            sidebar.classList.remove('active');
+            sidebar.classList.remove('open');
+        }
+    }
+});
 function syncExpandBtn(){var sb=document.getElementById('sidebar');var eb=document.getElementById('expandBtn');var ar=document.getElementById('collapseArrow');var c=sb.classList.contains('collapsed');if(eb)eb.style.display=c?'inline-flex':'none';if(ar)ar.textContent=c?'»':'«';}
 function updateSidebarInfo(){
   var ne=document.getElementById('sidebarNome');var ce=document.getElementById('sidebarCnpj');

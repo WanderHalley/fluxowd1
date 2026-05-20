@@ -648,6 +648,13 @@ body {
     .main-content { margin-left: 0 !important; }
     
     .modal { width: 95%; padding: 10px; }
+
+    .sidebar.active,
+    .sidebar.open {
+        left: 0;
+        width: 260px;
+        min-width: 260px;
+    }
 }
 /* ==========================================
    CONFIGURAÇÕES — Layout bonito + Drag & Drop
