@@ -644,13 +644,17 @@ body {
     .sidebar-collapse-btn { display: none; }
     .expand-btn { display: none !important; }
     .menu-toggle {
-        display: block;
-        z-index: 10000;
-        position: relative;
-        -webkit-tap-highlight-color: transparent;
-        touch-action: manipulation;
-        padding: 10px;
-        font-size: 1.8rem;
+        display: block !important;
+        position: relative !important;
+        z-index: 99999 !important;
+        background: transparent !important;
+        border: none !important;
+        color: var(--text-primary) !important;
+        font-size: 1.8rem !important;
+        cursor: pointer !important;
+        padding: 10px !important;
+        margin-right: 15px !important;
+        -webkit-tap-highlight-color: transparent !important;
     }
     .main-content { margin-left: 0 !important; }
     .modal { width: 95%; padding: 10px; }

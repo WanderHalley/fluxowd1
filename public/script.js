@@ -309,19 +309,30 @@ function openViewModal(){document.getElementById('viewModal').style.display='fle
 function closeViewModal(){document.getElementById('viewModal').style.display='none';}
 
 // ── SIDEBAR ──
+// Removemos a dependência do onclick="toggleSidebar()" no HTML
+// Usamos um listener de evento que é blindado contra interferências
+
+document.addEventListener('DOMContentLoaded', function() {
+    var menuBtn = document.querySelector('.menu-toggle');
+    if (menuBtn) {
+        // Remove o onclick original se existir para evitar conflito
+        menuBtn.removeAttribute('onclick');
+        
+        // Adiciona um listener de clique direto
+        menuBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            toggleSidebar();
+        });
+    }
+});
+
 function toggleSidebar() {
     var sidebar = document.getElementById('sidebar');
     if (!sidebar) return;
-    if (window.innerWidth <= 768) {
-        if (sidebar.style.left === '0px') {
-            sidebar.style.left = '-260px';
-        } else {
-            sidebar.style.left = '0px';
-        }
-    } else {
-        sidebar.classList.toggle('collapsed');
-        syncExpandBtn();
-    }
+    
+    // Força o estilo diretamente para garantir visibilidade
+    var isVisible = sidebar.style.left === '0px';
+    sidebar.style.left = isVisible ? '-260px' : '0px';
 }
 
 function collapseSidebar() {
@@ -336,9 +347,9 @@ function collapseSidebar() {
 }
 
 function closeSidebarMobile() {
-    if (window.innerWidth <= 768) {
-        var sidebar = document.getElementById('sidebar');
-        if (sidebar) sidebar.style.left = '-260px';
+    var sidebar = document.getElementById('sidebar');
+    if (sidebar && window.innerWidth <= 768) {
+        sidebar.style.left = '-260px';
     }
 }
 
