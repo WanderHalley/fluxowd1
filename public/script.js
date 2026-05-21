@@ -1064,10 +1064,12 @@ function filterEstoque(q){var list=appData.estoque||[];if(q)list=list.filter(fun
 function renderProdutosPage(){
   var pg=document.getElementById('page-produtos');
   if(!pg)return;
-  var catOpts=(appData.categoriasProdutos||[]).map(function(c){return'<option value="'+c+'">'+c+'</option>';}).join('');
+  var catOpts=(appData.categoriasProdutos||[]).map(function(c){
+    return'<option value="'+c+'"'+(produtosFilterCat===c?' selected':'')+'>'+c+'</option>';
+  }).join('');
   pg.innerHTML='<div class="page-header"><h2>🏷️ Produtos</h2><button class="btn btn-primary" onclick="openProdutoModal()">+ Novo Produto</button></div>'+
     '<div class="filter-bar">'+
-      '<input type="text" class="form-control" style="max-width:250px" placeholder="Buscar produto..." oninput="produtosSearchQuery=this.value;applyProdutosFilters()">'+
+      '<input type="text" class="form-control" style="max-width:250px" placeholder="Buscar produto..." value="'+(produtosSearchQuery||'')+'" oninput="produtosSearchQuery=this.value;applyProdutosFilters()">'+
       '<select class="form-control" style="max-width:180px" onchange="produtosFilterCat=this.value;applyProdutosFilters()">'+
         '<option value="">Todas Categorias</option>'+catOpts+
       '</select>'+
@@ -1082,7 +1084,7 @@ function renderProdutosPage(){
         '<tbody id="produtosBody"></tbody>'+
       '</table>'+
     '</div>';
-  renderProdutosTable(appData.produtos||[]);
+  applyProdutosFilters();
 }
 function renderProdutosTable(list){
   var tbody=document.getElementById('produtosBody');
