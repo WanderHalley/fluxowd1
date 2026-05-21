@@ -309,57 +309,49 @@ function openViewModal(){document.getElementById('viewModal').style.display='fle
 function closeViewModal(){document.getElementById('viewModal').style.display='none';}
 
 // ── SIDEBAR ──
-// Removemos a dependência do onclick="toggleSidebar()" no HTML
-// Usamos um listener de evento que é blindado contra interferências
-
+// Sincroniza o estado inicial do sidebar no mobile e tablet
 document.addEventListener('DOMContentLoaded', function() {
-    var menuBtn = document.querySelector('.menu-toggle');
-    if (menuBtn) {
-        // Remove o onclick original se existir para evitar conflito
-        menuBtn.removeAttribute('onclick');
-        
-        // Adiciona um listener de clique direto
-        menuBtn.addEventListener('click', function(e) {
-            e.stopPropagation();
-            toggleSidebar();
-        });
+    var sidebar = document.getElementById('sidebar');
+    if (sidebar && window.innerWidth <= 768) {
+        sidebar.classList.add('collapsed');
     }
+    syncExpandBtn();
 });
 
 function toggleSidebar() {
     var sidebar = document.getElementById('sidebar');
     if (!sidebar) return;
-    
-    // Força o estilo diretamente para garantir visibilidade
-    var isVisible = sidebar.style.left === '0px';
-    sidebar.style.left = isVisible ? '-260px' : '0px';
+    sidebar.classList.toggle('collapsed');
+    syncExpandBtn();
 }
 
 function collapseSidebar() {
     var sidebar = document.getElementById('sidebar');
     if (!sidebar) return;
-    if (window.innerWidth <= 768) {
-        sidebar.style.left = '-260px';
-    } else {
-        sidebar.classList.toggle('collapsed');
-        syncExpandBtn();
-    }
+    sidebar.classList.toggle('collapsed');
+    syncExpandBtn();
 }
 
 function closeSidebarMobile() {
     var sidebar = document.getElementById('sidebar');
     if (sidebar && window.innerWidth <= 768) {
-        sidebar.style.left = '-260px';
+        if (!sidebar.classList.contains('collapsed')) {
+            sidebar.classList.add('collapsed');
+            syncExpandBtn();
+        }
     }
 }
 
-// Fecha o menu mobile ao clicar em qualquer item de navegação
+// Fecha o menu mobile ao clicar em qualquer área externa ou item de navegação
 document.addEventListener('click', function(e) {
     if (window.innerWidth <= 768) {
         var sidebar = document.getElementById('sidebar');
-        var menuBtn = document.querySelector('.menu-toggle');
-        if (sidebar && !sidebar.contains(e.target) && menuBtn && !menuBtn.contains(e.target)) {
-            sidebar.style.left = '-260px';
+        var expandBtn = document.getElementById('expandBtn');
+        if (sidebar && !sidebar.contains(e.target) && expandBtn && !expandBtn.contains(e.target)) {
+            if (!sidebar.classList.contains('collapsed')) {
+                sidebar.classList.add('collapsed');
+                syncExpandBtn();
+            }
         }
     }
 });
