@@ -311,7 +311,8 @@ function closeViewModal(){document.getElementById('viewModal').style.display='no
 // ── SIDEBAR ──
 function toggleSidebar() {
     var sidebar = document.getElementById('sidebar');
-    if (window.innerWidth <= 768) {
+    var isMobile = window.matchMedia("(max-width: 768px)").matches;
+    if (isMobile) {
         var isOpen = sidebar.classList.contains('open');
         sidebar.classList.toggle('open');
         // Overlay
@@ -339,8 +340,11 @@ function toggleSidebar() {
 
 function collapseSidebar() {
     var sidebar = document.getElementById('sidebar');
-    if (window.innerWidth <= 768) {
+    var isMobile = window.matchMedia("(max-width: 768px)").matches;
+    if (isMobile) {
         sidebar.classList.remove('open');
+        var ov = document.getElementById('sidebarOverlay');
+        if (ov) ov.classList.remove('active');
     } else {
         sidebar.classList.toggle('collapsed');
         syncExpandBtn();
@@ -348,7 +352,8 @@ function collapseSidebar() {
 }
 
 function closeSidebarMobile() {
-    if (window.innerWidth <= 768) {
+    var isMobile = window.matchMedia("(max-width: 768px)").matches;
+    if (isMobile) {
         var sidebar = document.getElementById('sidebar');
         if (sidebar) sidebar.classList.remove('open');
         var ov = document.getElementById('sidebarOverlay');
@@ -358,7 +363,8 @@ function closeSidebarMobile() {
 
 // Fecha o menu mobile ao clicar em qualquer item de navegação
 document.addEventListener('click', function(e) {
-    if (window.innerWidth <= 768) {
+    var isMobile = window.matchMedia("(max-width: 768px)").matches;
+    if (isMobile) {
         var sidebar = document.getElementById('sidebar');
         var menuBtn = document.querySelector('.menu-toggle');
         if (sidebar && !sidebar.contains(e.target) && menuBtn && !menuBtn.contains(e.target)) {
