@@ -1144,7 +1144,13 @@ function renderClientesPage(){
   clientesSearchQuery='';
   clientesSortDir='asc';
   pg.innerHTML='<div class="page-header"><h2>👥 Clientes</h2><button class="btn btn-primary" onclick="openClienteModal()">+ Novo Cliente</button></div>' +
-    '<div class="filter-bar"><input type="text" class="form-control" style="max-width:250px" placeholder="Buscar cliente..." oninput="filterClientes(this.value)"></div>' +
+    '<div class="filter-bar">' +
+    '  <input type="text" class="form-control" style="max-width:250px" placeholder="Buscar cliente..." oninput="filterClientes(this.value)">' +
+    '  <select class="form-control" style="max-width:210px" id="clientesSortSelect" onchange="changeClientesSort(val=this.value)">' +
+    '    <option value="asc" selected>Ordem alfabética (A-Z)</option>' +
+    '    <option value="desc">Ordem inversa (Z-A)</option>' +
+    '  </select>' +
+    '</div>' +
     '<div class="table-responsive"><table class="table"><thead id="clientesHead"></thead><tbody id="clientesBody"></tbody></table></div>';
   renderClientesPageHeader();
   applyClientesFilters();
@@ -1154,8 +1160,15 @@ function renderClientesPageHeader(){
   var sortIcon=(clientesSortDir==='asc'?' ▲':' ▼');
   head.innerHTML='<tr><th style="cursor:pointer;user-select:none" onclick="toggleClientesSort()">Nome<span style="font-size:10px;opacity:0.6">'+sortIcon+'</span></th><th>CPF/CNPJ</th><th>Telefone</th><th>Cidade</th><th>Ações</th></tr>';
 }
+function changeClientesSort(val){
+  clientesSortDir=val;
+  renderClientesPageHeader();
+  applyClientesFilters();
+}
 function toggleClientesSort(){
   clientesSortDir=(clientesSortDir==='asc'?'desc':'asc');
+  var select=document.getElementById('clientesSortSelect');
+  if(select) select.value = clientesSortDir;
   renderClientesPageHeader();
   applyClientesFilters();
 }
