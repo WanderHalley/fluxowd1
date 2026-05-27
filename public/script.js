@@ -710,7 +710,22 @@ function renderComprasTable(compras){
   var tbody=document.getElementById('comprasBody');if(!tbody)return;
   if(compras.length===0){tbody.innerHTML='<tr><td colspan="10" style="text-align:center;padding:40px;color:var(--text-muted)">Nenhuma compra encontrada</td></tr>';return;}
   var sitOpts=(appData.situacaoCompra||[]);
-  tbody.innerHTML=compras.map(function(c){var total=(c.quantidade||1)*(c.valorUnit||0);var sitSelect='<select class="form-control" style="min-width:100px;padding:4px 6px;font-size:12px" onchange="changeCompraField('+c.id+',\'situacao\',this.value)">'+sitOpts.map(function(s){return'<option value="'+s+'"'+(c.situacao===s?' selected':'')+'>'+s+'</option>';}).join('')+'</select>';var acoes='<button class="btn btn-sm btn-outline" onclick="viewCompra('+c.id+')">👁️</button> <button class="btn btn-sm btn-primary" onclick="editCompra('+c.id+')">✏️</button> <button class="btn btn-sm btn-danger" onclick="deleteCompra('+c.id+')">🗑️</button>';return'<tr><td>'+formatDate(c.data)+'</td><td>'+(c.produto||'-')+'</td><td>'+(c.fornecedor||'-')+'</td><td>'+(c.quantidade||1)+'</td><td>'+formatCurrency(c.valorUnit)+'</td><td>'+formatCurrency(total)+'</td><td>'+(c.formaPagamento||'-')+'</td><td>'+formatDate(c.vencimento)+'</td><td>'+sitSelect+'</td><td>'+acoes+'</td></tr>';}).join('');
+  tbody.innerHTML=compras.map(function(c){
+    var total=(c.quantidade||1)*(c.valorUnit||0);
+    var sitColor='';
+    if(c.situacao==='Pago'){sitColor='color:#22c55e;font-weight:bold;';}
+    else if(c.situacao==='Devendo'){sitColor='color:#ef4444;font-weight:bold;';}
+    else if(c.situacao==='Guardado'){sitColor='color:#eab308;font-weight:bold;';}
+    var sitSelect='<select class="form-control" style="min-width:100px;padding:4px 6px;font-size:12px;font-weight:bold;'+sitColor+'" onchange="changeCompraField('+c.id+',\'situacao\',this.value)">'+sitOpts.map(function(s){
+      var optColor='';
+      if(s==='Pago'){optColor='color:#22c55e;font-weight:bold;';}
+      else if(s==='Devendo'){optColor='color:#ef4444;font-weight:bold;';}
+      else if(s==='Guardado'){optColor='color:#eab308;font-weight:bold;';}
+      return'<option value="'+s+'" style="'+optColor+'"'+(c.situacao===s?' selected':'')+'>'+s+'</option>';
+    }).join('')+'</select>';
+    var acoes='<button class="btn btn-sm btn-outline" onclick="viewCompra('+c.id+')">👁️</button> <button class="btn btn-sm btn-primary" onclick="editCompra('+c.id+')">✏️</button> <button class="btn btn-sm btn-danger" onclick="deleteCompra('+c.id+')">🗑️</button>';
+    return'<tr><td>'+formatDate(c.data)+'</td><td>'+(c.produto||'-')+'</td><td>'+(c.fornecedor||'-')+'</td><td>'+(c.quantidade||1)+'</td><td>'+formatCurrency(c.valorUnit)+'</td><td>'+formatCurrency(total)+'</td><td>'+(c.formaPagamento||'-')+'</td><td>'+formatDate(c.vencimento)+'</td><td>'+sitSelect+'</td><td>'+acoes+'</td></tr>';
+  }).join('');
 }
 function changeCompraField(id,field,value){var c=(appData.compras||[]).find(function(x){return x.id===id;});if(c){c[field]=value;saveData();applyComprasFilters();}}
 function onCompraProductChange(nome){
